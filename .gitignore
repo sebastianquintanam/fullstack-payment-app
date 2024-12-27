@@ -1,0 +1,23 @@
+# Ignorar dependencias locales
+node_modules/
+
+# Ignorar archivos de entorno
+.env
+
+# Ignorar directorios de salida
+dist/
+build/
+
+# Ignorar configuraciones del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Ignorar logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignorar configuraciones de editor
+.vscode/
+.idea/
+*.swp
