@@ -16,6 +16,17 @@
       "noImplicitAny": false,
       "strictBindCallApply": false,
       "forceConsistentCasingInFileNames": false,
-      "noFallthroughCasesInSwitch": false
-    }
+      "noFallthroughCasesInSwitch": false,
+      "types": ["node", "jest"] // <--- Agrega esta línea para incluir los tipos de Jest
+    },
+    "exclude": [
+      "node_modules",
+      "dist"
+    ],
+    "include": [
+      "src/**/*", // Incluye los archivos TypeScript de tu proyecto
+      "test/**/*.ts", // Incluye los archivos de prueba
+      "**/*.spec.ts" // Asegúrate de incluir los archivos de pruebas unitarias
+    ]
   }
+  
