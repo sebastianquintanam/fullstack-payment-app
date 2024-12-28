@@ -44,6 +44,22 @@ export class TransactionsService {
     return this.transactionRepository.updateStatus(transaction.id, status);
   }
 
+  // Obtener todas las transacciones
+  async getAllTransactions(): Promise<Transaction[]> {
+    // Llama al repositorio para obtener todas las transacciones
+    return this.transactionRepository.findAll();
+  }
+
+  // Obtener una transacción por ID
+  async getTransactionById(id: number): Promise<Transaction> {
+    // Busca una transacción por ID
+    const transaction = await this.transactionRepository.findById(id);
+    if (!transaction) {
+      throw new Error('Transaction not found'); // Lanza un error si no existe
+    }
+    return transaction;
+  }
+
   // Generar un número único para la transacción
   private generateTransactionNumber(): string {
     return `TRX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;

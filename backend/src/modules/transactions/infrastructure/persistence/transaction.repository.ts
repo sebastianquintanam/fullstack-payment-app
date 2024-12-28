@@ -1,5 +1,3 @@
-// backend/src/modules/transactions/infrastructure/persistence/transaction.repository.ts
-
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
@@ -29,6 +27,21 @@ export class TransactionRepository {
     return this.repository.findOne({ 
       where: { transactionNumber },
       relations: ['product'] // Esto nos trae también la info del producto
+    });
+  }
+
+  // Función para obtener todas las transacciones
+  async findAll(): Promise<Transaction[]> {
+    return this.repository.find({
+      relations: ['product'], // Incluimos los productos relacionados
+    });
+  }
+
+  // Función para buscar una transacción por su ID
+  async findById(id: number): Promise<Transaction | null> {
+    return this.repository.findOne({
+      where: { id },
+      relations: ['product'], // Incluimos los productos relacionados
     });
   }
 }
