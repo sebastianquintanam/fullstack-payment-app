@@ -1,31 +1,36 @@
 # fullstack-payment-app
-Este proyecto integra una pasarela de pagos para que los usuarios puedan realizar compras de productos mediante un flujo de pago completo.
-## Tecnologías Utilizadas
-- **Frontend**: ReactJS con Redux para la gestión del estado. Diseño responsivo utilizando Flexbox y Material-UI.
-- **Backend**: Nest.js con arquitectura Hexagonal (Ports & Adapters), base de datos PostgreSQL.
-- **Pruebas**: Jest para cobertura de más del 80% en frontend y backend.
-- **Despliegue**: AWS (S3, Lambda, RDS, CloudFront) para frontend y backend.
+This project integrates a payment gateway to allow users to purchase products through a complete payment flow.
 
-## Funcionalidades Clave
-1. **Visualización de Productos**:
-   - Muestra el inventario disponible con nombre, descripción, precio y unidades en stock.
-2. **Checkout de Pagos**:
-   - Modal para ingreso de datos de tarjeta de crédito y dirección de envío.
-   - Validación de datos de tarjeta (fake) con detección de logos (Visa/MasterCard).
-3. **Procesamiento de Pagos**:
-   - Transacciones creadas en estado "PENDING" y actualizadas con el resultado del pago.
-4. **Actualización de Stock**:
-   - Reducción del inventario tras la compra exitosa.
-5. **Diseño Responsivo**:
-   - Optimizado para dispositivos móviles (resolución mínima: iPhone SE 2020).
+## Technologies Used
+- **Frontend**: ReactJS with Redux for state management. Responsive design using Flexbox and Material-UI.
+- **Backend**: Nest.js with Hexagonal Architecture (Ports & Adapters), PostgreSQL database.
+- **Testing**: Jest with over 80% coverage for both frontend and backend.
+- **Deployment**: AWS (S3, Lambda, RDS, CloudFront) for frontend and backend.
 
-## Propósito
-El objetivo de este proyecto es demostrar habilidades en:
-- Desarrollo de APIs RESTful con buenas prácticas.
-- Implementación de interfaces de usuario dinámicas y adaptables.
-- Manejo de estado global con Redux.
-- Pruebas unitarias y cobertura alta del código.
-- Uso de servicios en la nube para el despliegue de aplicaciones.
+## Key Features
+### 1. Product Display
+- Shows the available inventory with name, description, price, and stock units.
 
-## Instrucciones de Configuración y Ejecución
-Para detalles sobre cómo ejecutar este proyecto, consulta la sección [README.md](./README.md) en las carpetas `/frontend` y `/backend`.
+### 2. Payment Checkout
+- Modal for entering credit card information and shipping address.
+- Fake card data validation with logo detection (Visa/MasterCard).
+
+### 3. Payment Processing
+- Transactions are created with a "PENDING" status and updated with the payment result.
+
+### 4. Stock Update
+- Reduces inventory after a successful purchase.
+
+### 5. Responsive Design
+- Optimized for mobile devices (minimum resolution: iPhone SE 2020).
+
+## Purpose
+The goal of this project is to showcase skills in:
+- Developing RESTful APIs with best practices.
+- Implementing dynamic and adaptive user interfaces.
+- Managing global state with Redux.
+- Writing unit tests with high code coverage.
+- Using cloud services for deploying applications.
+
+## Setup and Execution Instructions
+For details on how to run this project, refer to the [README.md](./README.md) section in the `/frontend` and `/backend` folders.
