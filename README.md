@@ -32,5 +32,8 @@ The goal of this project is to showcase skills in:
 - Writing unit tests with high code coverage.
 - Using cloud services for deploying applications.
 
+### API Testing
+To test the API endpoints, import the Postman Collection available in the file: `postman_collection.json`.
+
 ## Setup and Execution Instructions
 For details on how to run this project, refer to the [README.md](./README.md) section in the `/frontend` and `/backend` folders.
