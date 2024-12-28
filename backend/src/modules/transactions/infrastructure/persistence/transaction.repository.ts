@@ -20,20 +20,20 @@ export class TransactionRepository {
     return this.repository.findOne({ where: { id }, relations: options?.relations || [] });
   }
 
-  // Buscar transacción por número de transacción con relaciones
-  async findByTransactionNumber(transactionNumber: string, options?: { relations: string[] }): Promise<Transaction | undefined> {
-    return this.repository.findOne({ where: { transactionNumber }, relations: options?.relations || [] });
+  // Buscar transacción por número de transacción
+  async findByTransactionNumber(transactionNumber: string): Promise<Transaction | undefined> {
+    return this.repository.findOne({ where: { transactionNumber } });
   }
 
-  // Actualizar estado de la transacción
-  async updateStatus(id: number, status: string): Promise<Transaction> {
-    await this.repository.update(id, { status });
-    return this.findById(id);
+  // Actualizar una transacción completa
+  async update(transaction: Transaction): Promise<Transaction> {
+    await this.repository.save(transaction); // TypeORM guarda la transacción con las actualizaciones
+    return transaction; // Devuelve la transacción actualizada
   }
 
   // Crear una nueva transacción
   async create(transaction: Partial<Transaction>): Promise<Transaction> {
     const newTransaction = this.repository.create(transaction);
-    return this.repository.save(newTransaction);
+    return this.repository.save(newTransaction); // Guarda y retorna la transacción creada
   }
 }

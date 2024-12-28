@@ -3,10 +3,12 @@
 // Importamos el módulo principal de la aplicación y otras utilidades necesarias
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common'; // Importamos Logger para registrar mensajes
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'; // Importamos Swagger
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap'); // Logger para registrar mensajes importantes
+
   // Creamos una instancia de la aplicación a partir del módulo principal
   const app = await NestFactory.create(AppModule);
 
@@ -28,13 +30,16 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document); // URL donde estará disponible Swagger
 
+  // Habilitamos CORS si fuera necesario
+  app.enableCors();
+
   // Definimos el puerto en el que correrá la aplicación
   const port = process.env.PORT || 3000;
 
   // Arrancamos la aplicación
   await app.listen(port);
-  console.log(`🚀 Server running on http://localhost:${port}`);
-  console.log(`📄 Swagger documentation available at http://localhost:${port}/api`);
+  logger.log(`🚀 Server running on http://localhost:${port}`);
+  logger.log(`📄 Swagger documentation available at http://localhost:${port}/api`);
 }
 
 bootstrap();
