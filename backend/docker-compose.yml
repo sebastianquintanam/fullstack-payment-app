@@ -1,0 +1,21 @@
+# Esta es la versión de Docker Compose que usamos
+version: '3.8'
+
+# Aquí definimos nuestros servicios (contenedores)
+services:
+  # Este es nuestro servicio de base de datos
+  postgres:
+    image: postgres:latest                # Usamos la última versión de PostgreSQL
+    container_name: payment_app_db        # Nombre que le damos al contenedor
+    environment:                          # Variables de entorno para PostgreSQL
+      POSTGRES_DB: payment_app_db         # Nombre de la base de datos
+      POSTGRES_USER: postgres            # Usuario 
+      POSTGRES_PASSWORD: postgres        # Contraseña
+    ports:
+      - "5432:5432"                      # Puerto donde escucha PostgreSQL
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Guardamos los datos aquí aunque se apague el contenedor
+
+# Los volúmenes son para que no se pierdan los datos
+volumes:
+  postgres_data:

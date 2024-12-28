@@ -24,6 +24,12 @@ export class ProductRepository {
     return this.repository.findOne({ where: { id } });
   }
 
+   // Guardar un nuevo producto
+   async save(product: Partial<Product>): Promise<Product> {
+    const newProduct = this.repository.create(product);
+    return this.repository.save(newProduct);
+  }
+
   // Función para actualizar el stock cuando alguien compra
   async updateStock(id: number, newStock: number): Promise<Product> {
     await this.repository.update(id, { stock: newStock });
