@@ -1,7 +1,7 @@
 // backend/src/modules/transactions/domain/entities/transaction.entity.ts
 
 // Importamos todo lo necesario de TypeORM
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 // Importamos Product porque una transacción siempre tiene un producto asociado
 import { Product } from '../../../products/domain/entities/products.entity';
 
@@ -11,14 +11,12 @@ export class Transaction {
   id: number;
 
   // Número único para identificar la transacción
-  // unique: true significa que no puede repetirse
   @Column({ unique: true })
   transactionNumber: string;
 
   // Relación con Product: una transacción tiene un producto
-  // pero un producto puede estar en muchas transacciones
-  @ManyToOne(() => Product)
-  @JoinColumn()
+  @ManyToOne(() => Product, (product) => product.transactions, { eager: true })
+  @JoinColumn({ name: 'product_id' })
   product: Product;
 
   // Monto total de la transacción
@@ -26,24 +24,22 @@ export class Transaction {
   amount: number;
 
   // Estado de la transacción (PENDING, COMPLETED, FAILED)
-  @Column()
+  @Column({ length: 20 })
   status: string; 
 
   // Método de pago usado
-  @Column()
+  @Column({ length: 30 })
   paymentMethod: string;
 
-  // Detalles adicionales del pago
-  // jsonb permite guardar objetos JSON
-  // nullable: true significa que puede ser null
+  // Detalles adicionales del pago (JSON)
   @Column({ type: 'jsonb', nullable: true })
   paymentDetails: any;
 
   // Fecha de creación - se llena automáticamente
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 
   // Fecha de última actualización
-  @Column({ type: 'timestamp', nullable: true })
+  @UpdateDateColumn({ type: 'timestamp', nullable: true })
   updatedAt: Date;
 }

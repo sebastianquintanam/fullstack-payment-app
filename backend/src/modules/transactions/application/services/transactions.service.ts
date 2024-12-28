@@ -1,42 +1,55 @@
-// backend/src/modules/transactions/application/services/transactions.service.ts
-
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { TransactionRepository } from '../../infrastructure/persistence/transaction.repository';
 import { Transaction } from '../../domain/entities/transactions.entity';
 import { ProductsService } from '../../../products/application/services/products.service';
+import { CreateTransactionDto } from '../../interfaces/dto/create-transaction.dto';
+import { UpdateTransactionStatusDto } from '../../interfaces/dto/update-transaction.dto';
 
 @Injectable()
 export class TransactionsService {
   constructor(
-    private readonly transactionRepository: TransactionRepository,
-    private readonly productsService: ProductsService
+    private readonly transactionRepository: TransactionRepository, // Repositorio de transacciones
+    private readonly productsService: ProductsService // Servicio de productos
   ) {}
 
-  // Crear una nueva transacción cuando inicia una compra
-  async createTransaction(productId: number, quantity: number): Promise<Transaction> {
-    // Primero verificamos el producto y su precio
+  async createTransaction(createTransactionDto: CreateTransactionDto): Promise<Transaction> {
+    const { productId, quantity } = createTransactionDto;
+
     const product = await this.productsService.getProductById(productId);
-    
-    // Creamos la transacción con estado PENDING
+    if (!product) {
+      throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (quantity > product.stock) {
+      throw new HttpException('Insufficient stock for the requested quantity', HttpStatus.BAD_REQUEST);
+    }
+
+    await this.productsService.updateProductStock(productId, quantity);
+
     const transaction = {
-      product: product,
+      product,
       amount: product.price * quantity,
       status: 'PENDING',
       transactionNumber: this.generateTransactionNumber(),
-      paymentMethod: 'CREDIT_CARD'
+      paymentMethod: 'CREDIT_CARD',
     };
 
     return this.transactionRepository.create(transaction);
   }
 
-  // Actualizar el estado de una transacción
-  async updateTransactionStatus(transactionNumber: string, status: string): Promise<Transaction> {
-    const transaction = await this.transactionRepository.findByTransactionNumber(transactionNumber);
-    if (!transaction) {
-      throw new Error('Transacción no encontrada');
+  async updateTransactionStatus(updateTransactionDto: UpdateTransactionStatusDto): Promise<Transaction> {
+    const { transactionNumber, status } = updateTransactionDto;
+
+    const validStatuses = ['PENDING', 'COMPLETED', 'FAILED'];
+    if (!validStatuses.includes(status)) {
+      throw new HttpException('Invalid transaction status', HttpStatus.BAD_REQUEST);
     }
 
-    // Si la transacción se completa, actualizamos el stock
+    const transaction = await this.transactionRepository.findByTransactionNumber(transactionNumber);
+    if (!transaction) {
+      throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
+    }
+
     if (status === 'COMPLETED') {
       await this.productsService.updateProductStock(transaction.product.id, 1);
     }
@@ -44,23 +57,18 @@ export class TransactionsService {
     return this.transactionRepository.updateStatus(transaction.id, status);
   }
 
-  // Obtener todas las transacciones
   async getAllTransactions(): Promise<Transaction[]> {
-    // Llama al repositorio para obtener todas las transacciones
-    return this.transactionRepository.findAll();
+    return this.transactionRepository.findAll({ relations: ['product'] });
   }
 
-  // Obtener una transacción por ID
   async getTransactionById(id: number): Promise<Transaction> {
-    // Busca una transacción por ID
-    const transaction = await this.transactionRepository.findById(id);
+    const transaction = await this.transactionRepository.findById(id, { relations: ['product'] });
     if (!transaction) {
-      throw new Error('Transaction not found'); // Lanza un error si no existe
+      throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
     }
     return transaction;
   }
 
-  // Generar un número único para la transacción
   private generateTransactionNumber(): string {
     return `TRX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   }

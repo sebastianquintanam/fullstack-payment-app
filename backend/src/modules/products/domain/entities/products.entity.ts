@@ -1,7 +1,9 @@
 // backend/src/modules/products/domain/entities/product.entity.ts
 
 // Importamos los decoradores necesarios de TypeORM
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+// Importamos la entidad Transaction para definir la relación
+import { Transaction } from '../../../transactions/domain/entities/transactions.entity';
 
 // @Entity() le dice a TypeORM que esta clase es una tabla en la base de datos
 @Entity()
@@ -27,4 +29,11 @@ export class Product {
   // Columna para controlar el inventario disponible
   @Column()
   stock: number;
+
+  // Relación inversa con Transaction: un producto puede estar en muchas transacciones
+  // @OneToMany establece una relación uno-a-muchos
+  // El primer argumento es la entidad relacionada (Transaction)
+  // El segundo argumento es la propiedad en Transaction que apunta a Product
+  @OneToMany(() => Transaction, (transaction) => transaction.product)
+  transactions: Transaction[];
 }

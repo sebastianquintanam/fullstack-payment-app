@@ -10,38 +10,30 @@ export class TransactionRepository {
     private readonly repository: Repository<Transaction>
   ) {}
 
-  // Función para crear una nueva transacción cuando alguien compra
+  // Obtener todas las transacciones con relaciones
+  async findAll(options?: { relations: string[] }): Promise<Transaction[]> {
+    return this.repository.find({ relations: options?.relations || [] });
+  }
+
+  // Buscar transacción por ID con relaciones
+  async findById(id: number, options?: { relations: string[] }): Promise<Transaction | undefined> {
+    return this.repository.findOne({ where: { id }, relations: options?.relations || [] });
+  }
+
+  // Buscar transacción por número de transacción con relaciones
+  async findByTransactionNumber(transactionNumber: string, options?: { relations: string[] }): Promise<Transaction | undefined> {
+    return this.repository.findOne({ where: { transactionNumber }, relations: options?.relations || [] });
+  }
+
+  // Actualizar estado de la transacción
+  async updateStatus(id: number, status: string): Promise<Transaction> {
+    await this.repository.update(id, { status });
+    return this.findById(id);
+  }
+
+  // Crear una nueva transacción
   async create(transaction: Partial<Transaction>): Promise<Transaction> {
     const newTransaction = this.repository.create(transaction);
     return this.repository.save(newTransaction);
-  }
-
-  // Función para actualizar el estado de una transacción (cuando se completa o falla)
-  async updateStatus(id: number, status: string): Promise<Transaction> {
-    await this.repository.update(id, { status });
-    return this.repository.findOne({ where: { id } });
-  }
-
-  // Función para buscar una transacción por su número
-  async findByTransactionNumber(transactionNumber: string): Promise<Transaction> {
-    return this.repository.findOne({ 
-      where: { transactionNumber },
-      relations: ['product'] // Esto nos trae también la info del producto
-    });
-  }
-
-  // Función para obtener todas las transacciones
-  async findAll(): Promise<Transaction[]> {
-    return this.repository.find({
-      relations: ['product'], // Incluimos los productos relacionados
-    });
-  }
-
-  // Función para buscar una transacción por su ID
-  async findById(id: number): Promise<Transaction | null> {
-    return this.repository.findOne({
-      where: { id },
-      relations: ['product'], // Incluimos los productos relacionados
-    });
   }
 }

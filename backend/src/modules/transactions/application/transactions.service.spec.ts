@@ -1,87 +1,126 @@
-// Importaciones actualizadas
+// Importaciones necesarias para las pruebas
 import { Test, TestingModule } from '@nestjs/testing';
 import { TransactionsService } from './services/transactions.service';
 import { TransactionRepository } from '../../transactions/infrastructure/persistence/transaction.repository';
-import { ProductsService } from '../../products/application/services/products.service'; // Añadido
+import { ProductsService } from '../../products/application/services/products.service';
+import { CreateTransactionDto } from '../../transactions/interfaces/dto/create-transaction.dto';
+import { UpdateTransactionStatusDto } from '../../transactions/interfaces/dto/update-transaction.dto';
 
 describe('TransactionsService', () => {
-  let service: TransactionsService;
-  let repository: TransactionRepository;
-  let productsService: ProductsService; // Añadido
+  let service: TransactionsService; // Servicio que estamos probando
+  let repository: TransactionRepository; // Repositorio de transacciones mockeado
+  let productsService: ProductsService; // Servicio de productos mockeado
 
-  // Mock del TransactionRepository (mantenido)
+  // Mock de TransactionRepository con los métodos que utiliza el servicio
   const mockTransactionRepository = {
-    createTransaction: jest.fn(),
-    findAll: jest.fn(),
-    findById: jest.fn(),
-    updateStatus: jest.fn(), // Añadido si lo necesitas
+    create: jest.fn(), // Simula la creación de una transacción
+    findAll: jest.fn(), // Simula la búsqueda de todas las transacciones
+    findByTransactionNumber: jest.fn(), // Simula la búsqueda de una transacción por número
+    updateStatus: jest.fn(), // Simula la actualización del estado de una transacción
   };
 
-  // Añadido: Mock de ProductsService
+  // Mock de ProductsService con los métodos que utiliza el servicio
   const mockProductsService = {
-    getProductById: jest.fn(),
-    updateProductStock: jest.fn(),
-    getAllProducts: jest.fn(),
+    getProductById: jest.fn(), // Simula la obtención de un producto por su ID
+    updateProductStock: jest.fn(), // Simula la actualización del stock de un producto
   };
 
+  // Antes de cada prueba, configuramos un módulo de pruebas
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        TransactionsService,
+        TransactionsService, // Proveedor del servicio que probamos
         {
-          provide: TransactionRepository,
+          provide: TransactionRepository, // Simula el repositorio con el mock
           useValue: mockTransactionRepository,
         },
-        // Añadido: Provider para ProductsService
         {
-          provide: ProductsService,
+          provide: ProductsService, // Simula el servicio de productos con el mock
           useValue: mockProductsService,
         },
       ],
     }).compile();
 
+    // Obtenemos instancias del servicio y los mocks
     service = module.get<TransactionsService>(TransactionsService);
     repository = module.get<TransactionRepository>(TransactionRepository);
-    productsService = module.get<ProductsService>(ProductsService); // Añadido
+    productsService = module.get<ProductsService>(ProductsService);
   });
 
-  // Tus tests actuales...
-
-  // Añadir nuevos tests para métodos que usan ProductsService
+  /**
+   * Prueba para crear una transacción
+   */
   it('should create a transaction', async () => {
+    // DTO de entrada para la transacción
+    const createTransactionDto: CreateTransactionDto = {
+      productId: 1,
+      quantity: 2,
+    };
+
+    // Datos simulados del producto
     const mockProduct = {
       id: 1,
       price: 100,
       stock: 5,
     };
 
+    // Datos simulados de la transacción creada
     const mockTransaction = {
       id: 1,
       status: 'PENDING',
-      amount: 100,
+      amount: 200, // 2 * 100
+      product: mockProduct,
+      transactionNumber: 'TRX-123',
     };
 
+    // Configuración del mock para simular comportamientos
     mockProductsService.getProductById.mockResolvedValue(mockProduct);
-    mockTransactionRepository.createTransaction.mockResolvedValue(mockTransaction);
+    mockProductsService.updateProductStock.mockResolvedValue(undefined);
+    mockTransactionRepository.create.mockResolvedValue(mockTransaction);
 
-    const result = await service.createTransaction(1, 1);
-    expect(result).toEqual(mockTransaction);
+    // Llamada al método del servicio
+    const result = await service.createTransaction(createTransactionDto);
+
+    // Validaciones
+    expect(result).toEqual(mockTransaction); // Verifica que el resultado sea correcto
+    expect(mockProductsService.getProductById).toHaveBeenCalledWith(1); // Verifica que se llamó al servicio con el ID correcto
+    expect(mockTransactionRepository.create).toHaveBeenCalledWith(expect.any(Object)); // Verifica que se creó la transacción
   });
 
+  /**
+   * Prueba para actualizar el estado de una transacción
+   */
   it('should update transaction status and stock', async () => {
+    // DTO de entrada para actualizar la transacción
+    const updateTransactionDto: UpdateTransactionStatusDto = {
+      transactionNumber: 'TRX-123',
+      status: 'COMPLETED',
+    };
+
+    // Datos simulados de la transacción actual
     const mockTransaction = {
       id: 1,
       status: 'PENDING',
-      productId: 1,
+      product: {
+        id: 1,
+        stock: 10,
+      },
     };
 
-    mockTransactionRepository.findById.mockResolvedValue(mockTransaction);
+    // Configuración del mock para simular comportamientos
+    mockTransactionRepository.findByTransactionNumber.mockResolvedValue(mockTransaction);
     mockTransactionRepository.updateStatus.mockResolvedValue({
       ...mockTransaction,
       status: 'COMPLETED',
     });
+    mockProductsService.updateProductStock.mockResolvedValue(undefined);
 
-    const result = await service.updateTransactionStatus('1', 'COMPLETED');
-    expect(result.status).toBe('COMPLETED');
+    // Llamada al método del servicio
+    const result = await service.updateTransactionStatus(updateTransactionDto);
+
+    // Validaciones
+    expect(result.status).toBe('COMPLETED'); // Verifica que el estado sea COMPLETED
+    expect(mockTransactionRepository.findByTransactionNumber).toHaveBeenCalledWith('TRX-123'); // Verifica que se buscó por el número correcto
+    expect(mockProductsService.updateProductStock).toHaveBeenCalledWith(1, 1); // Verifica que se actualizó el stock correctamente
   });
 });
