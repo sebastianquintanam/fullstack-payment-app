@@ -1,6 +1,6 @@
 // Importaciones necesarias para las pruebas
 import { Test, TestingModule } from '@nestjs/testing';
-import { TransactionsService } from './services/transactions.service';
+import { TransactionsService, TransactionStatus } from './services/transactions.service'; // Importamos TransactionStatus
 import { TransactionRepository } from '../../transactions/infrastructure/persistence/transaction.repository';
 import { ProductsService } from '../../products/application/services/products.service';
 import { CreateTransactionDto } from '../../transactions/interfaces/dto/create-transaction.dto';
@@ -67,7 +67,7 @@ describe('TransactionsService', () => {
     // Datos simulados de la transacción creada
     const mockTransaction = {
       id: 1,
-      status: 'PENDING',
+      status: TransactionStatus.PENDING, // Cambiado para usar la enumeración
       amount: 200, // 2 * 100
       product: mockProduct,
       transactionNumber: 'TRX-123',
@@ -94,13 +94,13 @@ describe('TransactionsService', () => {
     // DTO de entrada para actualizar la transacción
     const updateTransactionDto: UpdateTransactionStatusDto = {
       transactionNumber: 'TRX-123',
-      status: 'COMPLETED',
+      status: TransactionStatus.COMPLETED, // Cambiado para usar la enumeración
     };
 
     // Datos simulados de la transacción actual
     const mockTransaction = {
       id: 1,
-      status: 'PENDING',
+      status: TransactionStatus.PENDING, // Cambiado para usar la enumeración
       product: {
         id: 1,
         stock: 10,
@@ -111,7 +111,7 @@ describe('TransactionsService', () => {
     mockTransactionRepository.findByTransactionNumber.mockResolvedValue(mockTransaction);
     mockTransactionRepository.updateStatus.mockResolvedValue({
       ...mockTransaction,
-      status: 'COMPLETED',
+      status: TransactionStatus.COMPLETED, // Cambiado para usar la enumeración
     });
     mockProductsService.updateProductStock.mockResolvedValue(undefined);
 
@@ -119,7 +119,7 @@ describe('TransactionsService', () => {
     const result = await service.updateTransactionStatus(updateTransactionDto);
 
     // Validaciones
-    expect(result.status).toBe('COMPLETED'); // Verifica que el estado sea COMPLETED
+    expect(result.status).toBe(TransactionStatus.COMPLETED); // Verifica que el estado sea COMPLETED
     expect(mockTransactionRepository.findByTransactionNumber).toHaveBeenCalledWith('TRX-123'); // Verifica que se buscó por el número correcto
     expect(mockProductsService.updateProductStock).toHaveBeenCalledWith(1, 1); // Verifica que se actualizó el stock correctamente
   });
