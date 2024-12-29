@@ -53,26 +53,40 @@ export class TransactionsService {
     return transaction;
   }
 
-  // Actualizar el estado de una transacción existente
-  async updateTransactionStatus(updateTransactionDto: UpdateTransactionStatusDto): Promise<Transaction> {
+    // Actualizar el estado de una transacción existente
+    async updateTransactionStatus(updateTransactionDto: UpdateTransactionStatusDto): Promise<Transaction> {
+    // Añadimos logs para debug
+    console.log('Service received DTO:', updateTransactionDto);
+        
     const { transactionNumber, status } = updateTransactionDto;
+    console.log('Parsed values:', { transactionNumber, status });
 
     // Validar que el estado proporcionado sea válido
     if (!Object.values(TransactionStatus).includes(status as TransactionStatus)) {
-      throw new HttpException('Invalid transaction status', HttpStatus.BAD_REQUEST);
+    console.log('Invalid status provided:', status);
+    throw new HttpException('Invalid transaction status', HttpStatus.BAD_REQUEST);
     }
 
     // Buscar la transacción por su número único
+    console.log('Searching for transaction:', transactionNumber);
     const transaction = await this.transactionRepository.findByTransactionNumber(transactionNumber);
+        
     if (!transaction) {
-      throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
+    console.log('Transaction not found for number:', transactionNumber);
+    throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
     }
+
+    console.log('Found transaction:', transaction);
 
     // Actualizar el estado de la transacción
     transaction.status = status;
-    await this.transactionRepository.save(transaction);
-    return transaction;
-  }
+    console.log('Updating transaction with new status:', status);
+        
+    const updatedTransaction = await this.transactionRepository.save(transaction);
+    console.log('Transaction updated successfully:', updatedTransaction);
+    
+    return updatedTransaction;
+    }
 
   // Obtener todas las transacciones con productos asociados
   async getAllTransactions(): Promise<Transaction[]> {
