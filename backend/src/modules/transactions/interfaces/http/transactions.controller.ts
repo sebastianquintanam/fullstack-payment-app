@@ -1,62 +1,59 @@
-// backend/src/modules/transactions/interfaces/http/transactions.controller.ts
-
 import { 
     Controller, 
     Post, 
+    Get,  
     Body, 
     Param, 
     Put, 
     BadRequestException, 
-    InternalServerErrorException 
-  } from '@nestjs/common';
-  import { TransactionsService } from '../../application/services/transactions.service';
-  import { CreateTransactionDto } from '../dto/create-transaction.dto';
-  import { UpdateTransactionStatusDto } from '../dto/update-transaction.dto';
-  
-  @Controller('transactions')
-  export class TransactionsController {
+    InternalServerErrorException,
+    NotFoundException  
+} from '@nestjs/common';
+import { TransactionsService } from '../../application/services/transactions.service';
+
+
+@Controller('transactions')
+export class TransactionsController {
     constructor(private readonly transactionsService: TransactionsService) {}
-  
+
+    // Tus endpoints actuales...
+
     /**
-     * POST /transactions - Create a new transaction
-     * @param createTransactionDto Data transfer object for creating a transaction
+     * GET /transactions - Get all transactions
+     * @returns List of all transactions
+     * @throws InternalServerErrorException If transactions cannot be retrieved
      */
-    @Post()
-    async createTransaction(@Body() createTransactionDto: CreateTransactionDto) {
-      try {
-        return await this.transactionsService.createTransaction(createTransactionDto);
-      } catch (error) {
-        console.error('Error while creating the transaction:', error.message);
-  
-        // Lanzar excepción más clara y específica
-        throw new InternalServerErrorException('Failed to create the transaction.');
-      }
+    @Get()
+    async getAllTransactions() {
+        try {
+            return await this.transactionsService.getAllTransactions();
+        } catch (error) {
+            console.error('Error while getting transactions:', error.message);
+            throw new InternalServerErrorException('Failed to retrieve transactions.');
+        }
     }
-  
+
     /**
-     * PUT /transactions/:number/status - Update the status of a transaction
-     * @param transactionNumber Unique identifier of the transaction
-     * @param updateTransactionDto Data transfer object for updating the transaction status
+     * GET /transactions/:id - Get a specific transaction
+     * @param id Transaction ID
+     * @returns The requested transaction
+     * @throws NotFoundException If the transaction is not found
+     * @throws InternalServerErrorException If the transaction cannot be retrieved
      */
-    @Put(':number/status')
-    async updateTransactionStatus(
-      @Param('number') transactionNumber: string,
-      @Body() updateTransactionDto: UpdateTransactionStatusDto
-    ) {
-      if (!transactionNumber) {
-        throw new BadRequestException('Transaction number is required.');
-      }
-  
-      try {
-        // Incluimos el número de transacción en el DTO
-        updateTransactionDto.transactionNumber = transactionNumber;
-        return await this.transactionsService.updateTransactionStatus(updateTransactionDto);
-      } catch (error) {
-        console.error('Error while updating the transaction status:', error.message);
-  
-        // Lanzar excepción más clara y específica
-        throw new InternalServerErrorException('Failed to update the transaction status.');
-      }
+    @Get(':id')
+    async getTransactionById(@Param('id') id: string) {
+        try {
+            const transaction = await this.transactionsService.getTransactionById(Number(id));
+            if (!transaction) {
+                throw new NotFoundException(`Transaction with ID ${id} not found.`);
+            }
+            return transaction;
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+            console.error('Error while getting transaction:', error.message);
+            throw new InternalServerErrorException('Failed to retrieve transaction.');
+        }
     }
-  }
-  
+}

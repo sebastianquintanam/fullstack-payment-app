@@ -16,6 +16,6 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
   password: configService.get('DB_PASSWORD', 'postgres'),
   database: configService.get('DB_NAME', 'payment_app_db'),
   entities: [Product, Transaction],
-  synchronize: true, // Solo para desarrollo
+  synchronize: true, 
   logging: true // Para ver las consultas SQL en consola
 });
