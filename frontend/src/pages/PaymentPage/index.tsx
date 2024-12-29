@@ -1,9 +1,17 @@
 // src/pages/PaymentPage/index.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../store/hooks';
 import InputMask from 'react-input-mask';
+
+// Interfaz para los productos
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+}
 
 // Interfaz para el formulario de pago
 interface PaymentForm {
@@ -17,10 +25,9 @@ const PaymentPage: React.FC = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
 
-  // Obtener el producto del store
-  const product = useAppSelector(state =>
-    state.products.products.find(p => p.id === Number(productId))
-  );
+  // Estado para productos obtenidos del backend
+  const [products, setProducts] = useState<Product[]>([]);
+  const [error, setError] = useState('');
 
   // Estado del formulario
   const [formData, setFormData] = useState<PaymentForm>({
@@ -34,6 +41,31 @@ const PaymentPage: React.FC = () => {
   const isCardValid = (cardNumber: string) => /^\d{16}$/.test(cardNumber);
   const isExpiryValid = (expiryDate: string) => /^(0[1-9]|1[0-2])\/\d{2}$/.test(expiryDate);
   const isCvvValid = (cvv: string) => /^\d{3,4}$/.test(cvv);
+
+  // Obtener productos desde el backend
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/products');
+      if (!response.ok) {
+        throw new Error('Error al obtener los productos');
+      }
+      const data = await response.json();
+      setProducts(data); // Actualizamos el estado con los productos
+    } catch (error) {
+      console.error('Error en la solicitud:', error);
+      setError('Hubo un problema al cargar los productos. Intenta más tarde.');
+    }
+  };
+
+  // Ejecutar fetchProducts al cargar el componente
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  // Obtener el producto del store (si está disponible)
+  const product = useAppSelector(state =>
+    state.products.products.find(p => p.id === Number(productId))
+  ) || products.find((p) => p.id === Number(productId)); // Alternativa si el producto no está en el store
 
   // Manejador de cambios en el formulario
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,6 +113,10 @@ const PaymentPage: React.FC = () => {
       alert('Hubo un problema al procesar el pago.');
     }
   };
+
+  if (error) {
+    return <div className="text-center p-8 text-red-600">{error}</div>;
+  }
 
   if (!product) {
     return <div className="text-center p-8">Producto no encontrado</div>;
