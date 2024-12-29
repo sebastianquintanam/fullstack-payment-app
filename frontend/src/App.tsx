@@ -1,27 +1,20 @@
 // src/App.tsx
-
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Provider } from 'react-redux';
-import { store } from './store/store';
+import { Routes, Route } from 'react-router-dom';
 import ProductPage from './pages/ProductPage';
 import PaymentPage from './pages/PaymentPage';
-import StatusPage from './pages/StatusPage';
-import SummaryPage from './pages/SummaryPage';
+import SuccessPage from './pages/SuccessPage';
+import ErrorPage from './pages/ErrorPage';
 
-function App() {
+const App: React.FC = () => {
   return (
-    <Provider store={store}>
-      <Router>
-        <Routes>
-          <Route path="/" element={<ProductPage />} />
-          <Route path="/checkout/:productId" element={<PaymentPage />} />
-          <Route path="/summary" element={<SummaryPage />} />
-          <Route path="/status" element={<StatusPage />} />
-        </Routes>
-      </Router>
-    </Provider>
+    <Routes>
+      <Route path="/" element={<ProductPage />} />
+      <Route path="/payment/:productId" element={<PaymentPage />} />
+      <Route path="/success" element={<SuccessPage />} />
+      <Route path="/error" element={<ErrorPage />} />
+    </Routes>
   );
-}
+};
 
 export default App;

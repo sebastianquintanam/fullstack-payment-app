@@ -1,57 +1,41 @@
 // src/store/slices/productSlice.ts
 
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { Product } from '../../types';
 
-// Definimos el tipo para un producto
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  description: string;
-  stock: number;
-}
-
-// Estado inicial
 interface ProductState {
-  products: Product[];
+  items: Product[];
   loading: boolean;
   error: string | null;
 }
 
 const initialState: ProductState = {
-  products: [],
+  items: [],
   loading: false,
   error: null
 };
 
-// Thunk para obtener productos
-export const fetchProducts = createAsyncThunk(
-  'products/fetchProducts',
-  async () => {
-    const response = await axios.get('http://localhost:3000/products');
-    return response.data;
-  }
-);
-
-const productSlice = createSlice({
+export const productSlice = createSlice({
   name: 'products',
   initialState,
-  reducers: {},
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchProducts.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(fetchProducts.fulfilled, (state, action) => {
-        state.loading = false;
-        state.products = action.payload;
-      })
-      .addCase(fetchProducts.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Error al cargar productos';
-      });
-  },
+  reducers: {
+    setProducts: (state, action: PayloadAction<Product[]>) => {
+      state.items = action.payload;
+    },
+    updateStock: (state, action: PayloadAction<{productId: number, quantity: number}>) => {
+      const product = state.items.find(p => p.id === action.payload.productId);
+      if (product) {
+        product.stock -= action.payload.quantity;
+      }
+    },
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+    },
+    setError: (state, action: PayloadAction<string | null>) => {
+      state.error = action.payload;
+    }
+  }
 });
 
+export const { setProducts, updateStock, setLoading, setError } = productSlice.actions;
 export default productSlice.reducer;
