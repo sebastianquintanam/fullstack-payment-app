@@ -1,76 +1,43 @@
-import { WompiPaymentRequest } from '../store/types';
+import type { WompiPaymentRequest } from '../store/types';
 
-export interface WompiTransactionParams {
-  amount: number;
-  cardToken: string;
-  reference: string;
-}
-
-export interface WompiResponse {
-  id: string;
-  reference: string;
-  status: 'PENDING' | 'APPROVED' | 'DECLINED';
-  amount_in_cents: number;
-  payment_method: {
+interface WompiErrorResponse {
+  error: {
     type: string;
-    token: string;
-    installments: number;
+    reason: string;
+    message: string;
   };
 }
 
-export interface WompiPaymentResponse {
-  id: string;
-  status: string;
-  amount: number;
-  reference: string;
+interface WompiPaymentResponse {
+  data: {
+    id: string;
+    created_at: string;
+    amount_in_cents: number;
+    reference: string;
+    currency: string;
+    payment_method_type: string;
+    status: 'PENDING' | 'APPROVED' | 'DECLINED' | 'ERROR';
+    payment_method: {
+      type: string;
+      extra: {
+        brand: string;
+        last_four: string;
+        installments: number;
+      };
+    };
+  };
 }
 
 class WompiService {
   private readonly API_URL = 'https://api-sandbox.co.uat.wompi.dev/v1';
   private readonly PUBLIC_KEY = 'pub_stagtest_g2u0HQd3ZMh05hsSgTS2lUV8t3s4mOt7';
 
-  async createTransaction(params: WompiTransactionParams): Promise<WompiResponse> {
-    try {
-      const response = await fetch(`${this.API_URL}/transactions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.PUBLIC_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          amount_in_cents: params.amount * 100,
-          currency: 'COP',
-          payment_method: {
-            type: 'CARD',
-            installments: 1,
-            token: params.cardToken
-          },
-          reference: params.reference
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Error en la transacción de Wompi');
-      }
-
-      const data = await response.json();
-      return {
-        id: data.id,
-        reference: data.reference,
-        status: data.status,
-        amount_in_cents: data.amount_in_cents,
-        payment_method: {
-          type: data.payment_method.type,
-          token: data.payment_method.token,
-          installments: data.payment_method.installments
-        }
-      };
-    } catch (error) {
-      console.error('Error creating Wompi transaction:', error);
-      throw error instanceof Error 
-        ? error 
-        : new Error('Error desconocido al crear la transacción');
+  private async handleResponse<T>(response: Response): Promise<T> {
+    if (!response.ok) {
+      const errorData = await response.json() as WompiErrorResponse;
+      throw new Error(errorData.error.message || 'Payment request failed');
     }
+    return response.json() as Promise<T>;
   }
 
   async createPayment(paymentData: WompiPaymentRequest): Promise<WompiPaymentResponse> {
@@ -81,55 +48,55 @@ class WompiService {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.PUBLIC_KEY}`
         },
-        body: JSON.stringify(paymentData)
+        body: JSON.stringify({
+          amount_in_cents: paymentData.amount * 100, // Wompi espera el monto en centavos
+          currency: paymentData.currency,
+          payment_method: paymentData.payment_method,
+          reference: paymentData.reference,
+        })
       });
 
-      if (!response.ok) {
-        throw new Error('Payment creation failed');
-      }
-
-      const data = await response.json();
-      return {
-        id: data.data.id,
-        status: data.data.status,
-        amount: data.data.amount_in_cents / 100,
-        reference: data.data.reference
-      };
+      return this.handleResponse<WompiPaymentResponse>(response);
     } catch (error) {
-      console.error('Error creating payment:', error);
-      throw error instanceof Error 
-        ? error 
-        : new Error('Error desconocido al crear el pago');
+      throw new Error(error instanceof Error ? error.message : 'Payment creation failed');
     }
   }
 
-  async getTokenizedCard(cardData: {
+  async getPaymentStatus(transactionId: string): Promise<WompiPaymentResponse> {
+    try {
+      const response = await fetch(`${this.API_URL}/transactions/${transactionId}`, {
+        headers: {
+          'Authorization': `Bearer ${this.PUBLIC_KEY}`
+        }
+      });
+
+      return this.handleResponse<WompiPaymentResponse>(response);
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Failed to get payment status');
+    }
+  }
+
+  async tokenizeCard(cardData: {
     number: string;
+    cvc: string;
     exp_month: string;
     exp_year: string;
-    cvc: string;
+    card_holder: string;
   }): Promise<string> {
     try {
       const response = await fetch(`${this.API_URL}/tokens/cards`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.PUBLIC_KEY}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.PUBLIC_KEY}`
         },
         body: JSON.stringify(cardData)
       });
 
-      if (!response.ok) {
-        throw new Error('Error al tokenizar la tarjeta');
-      }
-
-      const data = await response.json();
+      const data = await this.handleResponse<{ data: { id: string } }>(response);
       return data.data.id;
     } catch (error) {
-      console.error('Error tokenizing card:', error);
-      throw error instanceof Error 
-        ? error 
-        : new Error('Error desconocido al tokenizar la tarjeta');
+      throw new Error(error instanceof Error ? error.message : 'Card tokenization failed');
     }
   }
 }

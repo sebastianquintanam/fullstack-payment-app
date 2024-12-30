@@ -1,83 +1,35 @@
 // src/pages/PaymentPage/index.tsx
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAppSelector, useAppDispatch } from '../../store/hooks';
-import { wompiService } from '../../services/wompiService';
-import type { Product, PaymentFormData } from '../../types';
-import { PaymentSummary } from '../../components/payment/PaymentSummary';
-import { 
-  setTransactionPending,
-  setTransactionComplete,
-  setTransactionFailed 
-} from '../../store/slices/transactionSlice';
+
+import React from 'react';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { PaymentForm } from '../../components/payment/PaymentForm';
+import type { RootState } from '../../store';
 
 const PaymentPage: React.FC = () => {
-  const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-  const [showSummary, setShowSummary] = useState(false);
-  const [error, setError] = useState<string>('');
-  
-  // Obtener el producto del estado global
-  const product = useAppSelector(state => 
-    state.products.items.find(p => p.id === Number(productId))
-  );
+  const selectedProduct = useSelector((state: RootState) => state.products.selectedProduct);
 
-  const [formData, setFormData] = useState<PaymentFormData>({
-    cardNumber: '',
-    cardHolder: '',
-    expiryDate: '',
-    cvv: ''
-  });
+  if (!selectedProduct) {
+    navigate('/products');
+    return null;
+  }
 
-  // Si no hay producto, redirigir a la página principal
-  useEffect(() => {
-    if (!productId || !product) {
-      navigate('/');
-    }
-  }, [productId, product, navigate]);
-
-  const handlePayment = async () => {
-    if (!product) return;
-
-    try {
-      const response = await wompiService.createTransaction({
-        amount: product.price,
-        cardToken: formData.cardNumber,
-        reference: `payment-${Date.now()}`
-      });
-
-      dispatch(setTransactionPending({
-        id: response.id,
-        amount: product.price,
-        productId: product.id,
-        reference: response.reference
-      }));
-
-      if (response.status === 'APPROVED') {
-        dispatch(setTransactionComplete());
-        navigate('/success');
-      } else {
-        throw new Error('Payment declined');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error en el pago';
-      dispatch(setTransactionFailed(errorMessage));
-      setError(errorMessage);
-    }
+  const handlePaymentComplete = () => {
+    navigate('/success');
   };
 
-  if (error) {
-    return <div className="text-center p-8 text-red-600">{error}</div>;
-  }
-
-  if (!product) {
-    return <div className="text-center p-8">Producto no encontrado</div>;
-  }
-
   return (
-    <div className="container mx-auto p-4 max-w-lg">
-      {/* ... resto del JSX ... */}
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Complete Your Payment</h1>
+      
+      <div className="bg-gray-50 p-4 rounded-md mb-6">
+        <h2 className="font-semibold mb-2">Order Summary</h2>
+        <p>Product: {selectedProduct.name}</p>
+        <p>Price: ${selectedProduct.price}</p>
+      </div>
+
+      <PaymentForm onPaymentComplete={handlePaymentComplete} />
     </div>
   );
 };

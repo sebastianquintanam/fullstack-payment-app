@@ -1,9 +1,9 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { ProductState } from '../types';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import type { Product, ProductState } from '../types';
 
 const initialState: ProductState = {
   products: [],
-  transaction: null,
+  selectedProduct: null,
   loading: false,
   error: null
 };
@@ -11,8 +11,8 @@ const initialState: ProductState = {
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
   async () => {
-    const response = await fetch('/api/products');
-    return response.json();
+    // Implementar llamada a API
+    return [];
   }
 );
 
@@ -20,11 +20,18 @@ const productSlice = createSlice({
   name: 'products',
   initialState,
   reducers: {
-    setProducts: (state, action) => {
+    setProducts: (state, action: PayloadAction<Product[]>) => {
       state.products = action.payload;
     },
-    setTransaction: (state, action) => {
-      state.transaction = action.payload;
+    setSelectedProduct: (state, action: PayloadAction<Product>) => {
+      state.selectedProduct = action.payload;
+    },
+    updateStock: (state, action: PayloadAction<{ productId: string; newStock: number }>) => {
+      const { productId, newStock } = action.payload;
+      const product = state.products.find(p => p.id === productId);
+      if (product) {
+        product.stock = newStock;
+      }
     }
   },
   extraReducers: (builder) => {
@@ -43,5 +50,5 @@ const productSlice = createSlice({
   }
 });
 
-export const { setProducts, setTransaction } = productSlice.actions;
+export const { setProducts, setSelectedProduct, updateStock } = productSlice.actions;
 export default productSlice.reducer;
