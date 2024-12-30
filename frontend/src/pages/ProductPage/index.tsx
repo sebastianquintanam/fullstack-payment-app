@@ -1,27 +1,27 @@
-// src/pages/ProductPage/index.tsx
-
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { ProductCard } from '../../components/product/ProductCard';
 import { fetchProducts, setSelectedProduct } from '../../store/slices/productSlice';
-import type { AppDispatch, RootState } from '../../store/store'; 
-import type { Product } from '../../store/types';
+import type { AppDispatch, RootState } from '../../store/store';
+import type { Product } from '../../types';
 
 export const ProductPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { products, loading, error } = useSelector((state: RootState) => state.products);
+
+  // Corregimos la referencia al estado
+  const { items: products, loading, error } = useSelector((state: RootState) => state.products);
 
   useEffect(() => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
-  const handleProductClick = (productId: number) => {
-    const selectedProduct = products.find((product) => product.id === productId);
+  const handleProductClick = (id: number) => {
+    const selectedProduct = products.find((product: Product) => product.id === id);
     if (selectedProduct) {
       dispatch(setSelectedProduct(selectedProduct));
-      navigate(`/checkout/${productId}`);
+      navigate(`/checkout/${id}`);
     }
   };
 
@@ -37,15 +37,15 @@ export const ProductPage: React.FC = () => {
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-8">Productos Disponibles</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products.map((product) => (
+        {products.map((product: Product) => (
           <ProductCard
-            key={product.id}
-            id={Number(product.id)} // Ensure id is a number
+            key={product.id.toString()}
+            id={product.id} // Confirmamos que id es un número
             name={product.name}
             price={product.price}
             stock={product.stock}
             description={product.description}
-            onClick={() => handleProductClick(Number(product.id))} // Explicitly handle number conversion
+            onClick={() => handleProductClick(product.id)} // Manejamos id como número
           />
         ))}
       </div>

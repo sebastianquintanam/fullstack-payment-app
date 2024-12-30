@@ -1,5 +1,3 @@
-// src/components/payment/PaymentForm.tsx
-
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -25,7 +23,6 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
   const [error, setError] = useState<string | null>(null);
   const selectedProduct = useSelector((state: RootState) => state.products.selectedProduct);
 
-  // Estado del formulario y tipo de tarjeta
   const [formData, setFormData] = useState({
     cardNumber: '',
     cardHolder: '',
@@ -41,9 +38,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
     const value = e.target.value.replace(/\D/g, '');
     const formatted = value.match(/.{1,4}/g)?.join(' ') || value;
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      cardNumber: formatted
+      cardNumber: formatted,
     }));
 
     const detectedType = cardValidations.getCardType(value);
@@ -75,20 +72,16 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
   };
 
   const tokenizeCardData = async () => {
-    try {
-      setProcessingStep('Procesando tarjeta...');
-      const cardData = {
-        number: formData.cardNumber.replace(/\s/g, ''),
-        cvc: formData.cvv,
-        exp_month: formData.expiryMonth,
-        exp_year: formData.expiryYear,
-        card_holder: formData.cardHolder
-      };
+    setProcessingStep('Procesando tarjeta...');
+    const cardData = {
+      number: formData.cardNumber.replace(/\s/g, ''),
+      cvc: formData.cvv,
+      exp_month: formData.expiryMonth,
+      exp_year: formData.expiryYear,
+      card_holder: formData.cardHolder,
+    };
 
-      return await wompiService.tokenizeCard(cardData);
-    } catch (error) {
-      throw new Error('Error al procesar la tarjeta');
-    }
+    return wompiService.tokenizeCard(cardData);
   };
 
   const handlePayment = async () => {
@@ -101,46 +94,48 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
     setError(null);
 
     try {
-      // Tokenización de la tarjeta
       const cardToken = await tokenizeCardData();
       setProcessingStep('Procesando pago...');
 
       const paymentData: WompiPaymentRequest = {
-        amount: selectedProduct.price * 100, // Convertimos a centavos
+        amount: selectedProduct.price * 100,
         currency: 'COP',
         payment_method: {
           type: 'CARD',
-          token: cardToken
+          token: cardToken,
         },
-        reference: `order_${Date.now()}`
+        reference: `order_${Date.now()}`,
       };
 
       const response = await wompiService.createPayment(paymentData);
 
-      if (response.data.status === 'APPROVED') {
-        // Actualizamos el stock
-        dispatch(updateStock({
-          productId: Number(selectedProduct.id), // Convertir a número
-          newStock: selectedProduct.stock - 1
-        }));
-
-        // Actualizamos el estado de la transacción
-        dispatch(setTransactionComplete({
-            id: response.data.id.toString(),
-            reference: response.data.reference,
-            amount: response.data.amount_in_cents / 100,
-            productId: Number(selectedProduct.id) // Convertir a número
-          }));
-
+      if (response.status === 'APPROVED') {
+        dispatch(
+          updateStock({
+            productId: Number(selectedProduct.id),
+            newStock: selectedProduct.stock - 1,
+          })
+        );
+      
+        dispatch(
+          setTransactionComplete({
+            id: response.id,
+            reference: response.reference,
+            amount: response.amount / 100, // Convierte directamente si `response.amount` está en centavos
+            productId: Number(selectedProduct.id),
+            status: 'COMPLETED',
+          })
+        );
+      
         setProcessingStep('¡Pago completado!');
         onPaymentComplete();
         navigate('/success');
       } else {
-        throw new Error(`Pago ${response.data.status.toLowerCase()}`);
+        throw new Error(`Pago ${response.status.toLowerCase()}`);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error procesando el pago';
-      dispatch(setTransactionFailed(errorMessage));
+      dispatch(setTransactionFailed({ id: Date.now().toString(), status: 'FAILED', error: errorMessage }));
       setError(errorMessage);
       navigate('/error');
     } finally {
@@ -157,7 +152,6 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
     }
   };
 
-  // Renderizado del formulario
   return (
     <div className="w-full max-w-md mx-auto p-6">
       {cardType && (
@@ -168,9 +162,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <label className="block text-sm font-medium">
-            Número de Tarjeta
-          </label>
+          <label className="block text-sm font-medium">Número de Tarjeta</label>
           <input
             type="text"
             value={formData.cardNumber}
@@ -180,44 +172,40 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
             placeholder="xxxx xxxx xxxx xxxx"
             disabled={isProcessing}
           />
-          {errors.cardNumber && (
-            <Alert variant="destructive">{errors.cardNumber}</Alert>
-          )}
+          {errors.cardNumber && <Alert variant="destructive">{errors.cardNumber}</Alert>}
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium">
-            Titular de la Tarjeta
-          </label>
+          <label className="block text-sm font-medium">Titular de la Tarjeta</label>
           <input
             type="text"
             value={formData.cardHolder}
-            onChange={e => setFormData(prev => ({
-              ...prev,
-              cardHolder: e.target.value.toUpperCase()
-            }))}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                cardHolder: e.target.value.toUpperCase(),
+              }))
+            }
             className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
             placeholder="Como aparece en la tarjeta"
             disabled={isProcessing}
           />
-          {errors.cardHolder && (
-            <Alert variant="destructive">{errors.cardHolder}</Alert>
-          )}
+          {errors.cardHolder && <Alert variant="destructive">{errors.cardHolder}</Alert>}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="block text-sm font-medium">
-              Fecha de Vencimiento
-            </label>
+            <label className="block text-sm font-medium">Fecha de Vencimiento</label>
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="text"
                 value={formData.expiryMonth}
-                onChange={e => setFormData(prev => ({
-                  ...prev,
-                  expiryMonth: e.target.value.replace(/\D/g, '')
-                }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    expiryMonth: e.target.value.replace(/\D/g, ''),
+                  }))
+                }
                 maxLength={2}
                 className="w-full p-2 border rounded"
                 placeholder="MM"
@@ -226,19 +214,19 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
               <input
                 type="text"
                 value={formData.expiryYear}
-                onChange={e => setFormData(prev => ({
-                  ...prev,
-                  expiryYear: e.target.value.replace(/\D/g, '')
-                }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    expiryYear: e.target.value.replace(/\D/g, ''),
+                  }))
+                }
                 maxLength={2}
                 className="w-full p-2 border rounded"
                 placeholder="YY"
                 disabled={isProcessing}
               />
             </div>
-            {errors.expiry && (
-              <Alert variant="destructive">{errors.expiry}</Alert>
-            )}
+            {errors.expiry && <Alert variant="destructive">{errors.expiry}</Alert>}
           </div>
 
           <div className="space-y-2">
@@ -246,35 +234,30 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
             <input
               type="password"
               value={formData.cvv}
-              onChange={e => setFormData(prev => ({
-                ...prev,
-                cvv: e.target.value.replace(/\D/g, '')
-              }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  cvv: e.target.value.replace(/\D/g, ''),
+                }))
+              }
               maxLength={4}
               className="w-full p-2 border rounded"
               placeholder="***"
               disabled={isProcessing}
             />
-            {errors.cvv && (
-              <Alert variant="destructive">{errors.cvv}</Alert>
-            )}
+            {errors.cvv && <Alert variant="destructive">{errors.cvv}</Alert>}
           </div>
         </div>
 
-        {error && (
-          <Alert variant="destructive">{error}</Alert>
-        )}
+        {error && <Alert variant="destructive">{error}</Alert>}
 
         {processingStep && (
-          <div className="text-sm text-gray-600 text-center">
-            {processingStep}
-          </div>
+          <div className="text-sm text-gray-600 text-center">{processingStep}</div>
         )}
 
-        <button 
+        <button
           type="submit"
-          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 
-                   disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           disabled={isProcessing}
         >
           {isProcessing ? 'Procesando...' : 'Continuar al pago'}
@@ -284,8 +267,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
       {showSummary && (
         <PaymentSummary
           amount={selectedProduct?.price || 0}
-          baseFee={5.00}
-          deliveryFee={10.00}
+          baseFee={5.0}
+          deliveryFee={10.0}
           onConfirm={handlePayment}
           onCancel={() => setShowSummary(false)}
           isProcessing={isProcessing}

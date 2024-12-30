@@ -1,5 +1,5 @@
 export interface Product {
-    id: string;
+    id: number;
     name: string;
     price: number;
     stock: number;
@@ -10,8 +10,9 @@ export interface Product {
     id: string;
     status: 'PENDING' | 'COMPLETED' | 'FAILED';
     amount: number;
-    productId: string;
+    productId: number;
     reference: string;
+    data?: Record<string, unknown>;
   }
   
   export interface ProductState {
@@ -24,22 +25,17 @@ export interface Product {
   export interface TransactionState {
     error: string | null;
     currentTransaction: Transaction | null;
-    current: Transaction | null;
     history: Transaction[];
   }
   
   export interface WompiPaymentRequest {
     amount: number;
     currency: string;
-    payment_method: {
-      type: string;
-      token: string;
-    };
+    payment_method: PaymentMethodData;
     reference: string;
   }
-
-  // Añadir estas interfaces al archivo de tipos existente
-    export interface CardTokenizationRequest {
+  
+  export interface CardTokenizationRequest {
     number: string;
     cvc: string;
     exp_month: string;
@@ -50,11 +46,4 @@ export interface Product {
   export interface PaymentMethodData {
     type: string;
     token: string;
-  }
-  
-  export interface WompiPaymentRequest {
-    amount: number;
-    currency: string;
-    payment_method: PaymentMethodData;
-    reference: string;
   }

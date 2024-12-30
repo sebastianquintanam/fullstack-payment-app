@@ -1,9 +1,12 @@
-// frontend/src/services/wompiService.ts
+// src/services/wompiService.ts
 
-/**
- * Interfaces para las respuestas de la API de Wompi
- */
-interface WompiErrorResponse {
+import type {
+    Transaction,
+    WompiPaymentRequest,
+    CardTokenizationRequest,
+  } from '../types';
+  
+  interface WompiErrorResponse {
     error: {
       type: string;
       reason: string;
@@ -11,131 +14,106 @@ interface WompiErrorResponse {
     };
   }
   
-  /**
-   * Respuesta de la API de Wompi para transacciones
-   * @see https://docs.wompi.co/docs/colombia/inicio-rapido
-   */
   interface WompiPaymentResponse {
-    data: {
-      id: string;                   // ID único de la transacción
-      reference: string;            // Referencia única del comercio
-      status: 'PENDING' | 'APPROVED' | 'DECLINED' | 'ERROR';  // Estado de la transacción
-      amount_in_cents: number;      // Monto en centavos
-    };
+    id: string;
+    reference: string;
+    status: 'PENDING' | 'APPROVED' | 'DECLINED' | 'ERROR';
+    amount_in_cents: number;
   }
   
-  /**
-   * Datos necesarios para crear una transacción de pago en Wompi
-   */
-  interface WompiPaymentRequest {
-    amount: number;
-    currency: string;
-    payment_method: {
-      type: string;
-      token: string;
-    };
-    reference: string;
-  }
-
-  /**
-   * Servicio para interactuar con la API de Wompi
-   * Maneja la creación de pagos, tokenización de tarjetas y consulta de estados
-   */
   class WompiService {
-    // URLs y llaves de la API en modo sandbox
     private readonly API_URL = 'https://api-sandbox.co.uat.wompi.dev/v1';
     private readonly PUBLIC_KEY = 'pub_stagtest_g2u0HQd3ZMh05hsSgTS2lUV8t3s4mOt7';
   
-    /**
-     * Maneja las respuestas de la API y transforma los errores
-     * @param response Respuesta de fetch
-     * @returns Datos procesados de la respuesta
-     * @throws Error si la respuesta no es exitosa
-     */
+    private mapWompiStatus(wompiStatus: string): 'PENDING' | 'COMPLETED' | 'FAILED' {
+      const statusMap = {
+        APPROVED: 'COMPLETED',
+        PENDING: 'PENDING',
+        DECLINED: 'FAILED',
+        ERROR: 'FAILED',
+      } as const;
+  
+      return statusMap[wompiStatus as keyof typeof statusMap];
+    }
+  
     private async handleResponse<T>(response: Response): Promise<T> {
       if (!response.ok) {
-        const errorData = await response.json() as WompiErrorResponse;
-        throw new Error(errorData.error.message || 'Payment request failed');
+        const errorData = (await response.json()) as WompiErrorResponse;
+        throw new Error(errorData.error.message || 'Request failed');
       }
       return response.json() as Promise<T>;
     }
   
-    /**
-     * Crea una nueva transacción de pago
-     * @param paymentData Datos del pago a realizar
-     * @returns Respuesta de la transacción creada
-     */
-    async createPayment(paymentData: WompiPaymentRequest): Promise<WompiPaymentResponse> {
+    async createPayment(paymentRequest: WompiPaymentRequest): Promise<Transaction> {
       try {
         const response = await fetch(`${this.API_URL}/transactions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.PUBLIC_KEY}`
+            Authorization: `Bearer ${this.PUBLIC_KEY}`,
           },
           body: JSON.stringify({
-            amount_in_cents: paymentData.amount * 100,
-            currency: paymentData.currency,
-            payment_method: paymentData.payment_method,
-            reference: paymentData.reference,
-          })
+            amount_in_cents: paymentRequest.amount * 100, // Convert amount to cents
+            currency: paymentRequest.currency,
+            payment_method: paymentRequest.payment_method,
+            reference: paymentRequest.reference,
+          }),
         });
   
-        return this.handleResponse<WompiPaymentResponse>(response);
+        const wompiResponse = await this.handleResponse<WompiPaymentResponse>(response);
+  
+        return {
+          id: wompiResponse.id,
+          reference: wompiResponse.reference,
+          status: this.mapWompiStatus(wompiResponse.status),
+          amount: wompiResponse.amount_in_cents / 100, // Convert back to units
+          productId: 0, // Placeholder, as productId isn't part of the response
+        };
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : 'Payment creation failed');
+        throw new Error(error instanceof Error ? error.message : 'Failed to create payment');
       }
     }
   
-    /**
-     * Consulta el estado de una transacción
-     * @param transactionId ID de la transacción a consultar
-     * @returns Estado actual de la transacción
-     */
-    async getPaymentStatus(transactionId: string): Promise<WompiPaymentResponse> {
-      try {
-        const response = await fetch(`${this.API_URL}/transactions/${transactionId}`, {
-          headers: {
-            'Authorization': `Bearer ${this.PUBLIC_KEY}`
-          }
-        });
-  
-        return this.handleResponse<WompiPaymentResponse>(response);
-      } catch (error) {
-        throw new Error(error instanceof Error ? error.message : 'Failed to get payment status');
-      }
-    }
-  
-    /**
-     * Tokeniza una tarjeta de crédito
-     * @param cardData Datos de la tarjeta a tokenizar
-     * @returns Token de la tarjeta
-     */
-    async tokenizeCard(cardData: {
-      number: string;
-      cvc: string;
-      exp_month: string;
-      exp_year: string;
-      card_holder: string;
-    }): Promise<string> {
+    async tokenizeCard(cardData: CardTokenizationRequest): Promise<string> {
       try {
         const response = await fetch(`${this.API_URL}/tokens/cards`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.PUBLIC_KEY}`
+            Authorization: `Bearer ${this.PUBLIC_KEY}`,
           },
-          body: JSON.stringify(cardData)
+          body: JSON.stringify(cardData),
         });
   
-        const data = await this.handleResponse<{ data: { id: string } }>(response);
-        return data.data.id;
+        const tokenResponse = await this.handleResponse<{ id: string }>(response);
+        return tokenResponse.id;
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : 'Card tokenization failed');
+        throw new Error(error instanceof Error ? error.message : 'Failed to tokenize card');
+      }
+    }
+  
+    async getPaymentStatus(transactionId: string, productId: number): Promise<Transaction> {
+      try {
+        const response = await fetch(`${this.API_URL}/transactions/${transactionId}`, {
+          headers: {
+            Authorization: `Bearer ${this.PUBLIC_KEY}`,
+          },
+        });
+  
+        const wompiResponse = await this.handleResponse<WompiPaymentResponse>(response);
+  
+        return {
+          id: wompiResponse.id,
+          reference: wompiResponse.reference,
+          status: this.mapWompiStatus(wompiResponse.status),
+          amount: wompiResponse.amount_in_cents / 100, // Convert back to units
+          productId: productId, // Pass through productId
+        };
+      } catch (error) {
+        throw new Error(error instanceof Error ? error.message : 'Failed to get payment status');
       }
     }
   }
   
-  // Exportamos una única instancia del servicio
   const wompiService = new WompiService();
   export default wompiService;

@@ -1,22 +1,19 @@
-// src/pages/ErrorPage/index.tsx
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import type { RootState } from '../../store';
+import type { RootState } from '../../store/store';
 import { XCircle } from 'lucide-react';
 
 const ErrorPage: React.FC = () => {
   const navigate = useNavigate();
-  const error = useSelector((state: RootState) => state.transactions.error);
+
+    const error = useSelector((state: RootState) => state.transactions.error);
 
   return (
     <div className="container mx-auto px-4 py-16 text-center">
       <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg">
         <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-        <h1 className="text-2xl font-bold text-red-600 mb-4">
-          Error en el Pago
-        </h1>
+        <h1 className="text-2xl font-bold text-red-600 mb-4">Error en el Pago</h1>
         
         <div className="space-y-4">
           <p className="text-gray-600 bg-red-50 p-4 rounded-lg">
