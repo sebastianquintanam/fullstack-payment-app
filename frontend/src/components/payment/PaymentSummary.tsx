@@ -1,10 +1,12 @@
+// /frontend/src/components/payment/PaymentSummary.tsx
 import React from 'react';
+import { Alert } from '../ui/alert';
 
 interface PaymentSummaryProps {
   amount: number;
   baseFee: number;
   deliveryFee: number;
-  onConfirm: () => Promise<void>;
+  onConfirm: () => void;
   onCancel: () => void;
   isProcessing: boolean;
 }
@@ -20,44 +22,51 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   const total = amount + baseFee + deliveryFee;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded-lg max-w-md w-full">
-        <h2 className="text-xl font-bold mb-4">Payment Summary</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4">Resumen del Pago</h2>
         
-        <div className="space-y-2 mb-4">
-          <div className="flex justify-between">
-            <span>Product Amount:</span>
-            <span>${amount}</span>
+        <div className="space-y-4">
+          <div className="border-b pb-4">
+            <div className="flex justify-between mb-2">
+              <span>Subtotal:</span>
+              <span>${amount.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between mb-2">
+              <span>Tarifa base:</span>
+              <span>${baseFee.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between mb-2">
+              <span>Envío:</span>
+              <span>${deliveryFee.toFixed(2)}</span>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span>Base Fee:</span>
-            <span>${baseFee}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Delivery Fee:</span>
-            <span>${deliveryFee}</span>
-          </div>
-          <div className="flex justify-between font-bold border-t pt-2">
-            <span>Total:</span>
-            <span>${total}</span>
-          </div>
-        </div>
 
-        <div className="flex space-x-4">
-          <button
-            onClick={onConfirm}
-            disabled={isProcessing}
-            className="flex-1 bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
-          >
-            {isProcessing ? 'Processing...' : 'Confirm Payment'}
-          </button>
-          <button
-            onClick={onCancel}
-            disabled={isProcessing}
-            className="flex-1 bg-gray-200 text-gray-800 py-2 rounded hover:bg-gray-300"
-          >
-            Cancel
-          </button>
+          <div className="flex justify-between font-bold text-lg">
+            <span>Total a pagar:</span>
+            <span>${total.toFixed(2)}</span>
+          </div>
+
+          <Alert className="mb-4">
+            Al confirmar, se procesará el pago por ${total.toFixed(2)}
+          </Alert>
+
+          <div className="flex gap-4">
+            <button
+              onClick={onCancel}
+              disabled={isProcessing}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={isProcessing}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {isProcessing ? 'Procesando...' : 'Confirmar Pago'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,57 +1,46 @@
-// src/pages/SuccessPage/index.tsx
-
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+// /frontend/src/pages/SuccessPage/index.tsx
+import React from 'react';
 import { useSelector } from 'react-redux';
-import { CheckCircle2 } from 'lucide-react';
-import type { RootState } from '../../store/store';
+import { Link } from 'react-router-dom';
+import { RootState } from '../../store/store';
+import { CheckCircle } from 'lucide-react';
+import { Card } from '../../components/Card';
 
 export const SuccessPage: React.FC = () => {
-  const navigate = useNavigate();
   const transaction = useSelector((state: RootState) => state.transactions.currentTransaction);
-
-  // Redirect if no transaction exists
-  useEffect(() => {
-    if (!transaction) {
-      navigate('/');
-    }
-  }, [transaction, navigate]);
-
-  if (!transaction) {
-    return null; // Render nothing if no transaction (additional safeguard)
-  }
+  const product = useSelector((state: RootState) => state.products.selectedProduct);
 
   return (
-    <div className="container mx-auto px-4 py-16 text-center">
-      <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg">
-        <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-        <h1 className="text-2xl font-bold text-green-600 mb-4">
-          ¡Pago Exitoso!
-        </h1>
-        
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md p-6 space-y-6">
+        <div className="text-center space-y-4">
+          <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
+          <h1 className="text-2xl font-bold text-gray-900">¡Pago Exitoso!</h1>
+        </div>
+
         <div className="space-y-4">
-          <p className="text-gray-600">
-            Tu transacción se ha completado correctamente
-          </p>
-          
-          {/* Transaction details */}
-          <div className="bg-gray-50 p-4 rounded text-left">
-            <p className="text-sm text-gray-500">Referencia de pago:</p>
-            <p className="font-mono text-gray-800">{transaction.reference}</p>
-            <p className="text-sm text-gray-500 mt-2">Monto:</p>
-            <p className="font-bold text-gray-800">${(transaction.amount / 100).toFixed(2)}</p>
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h2 className="font-semibold mb-2">Detalles de la transacción:</h2>
+            <div className="space-y-2 text-sm">
+              <p>Referencia: {transaction?.reference}</p>
+              <p>Monto: ${transaction?.amount.toFixed(2)}</p>
+              <p>Producto: {product?.name}</p>
+            </div>
           </div>
 
-          <button
-            onClick={() => navigate('/')}
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 mt-4"
-          >
-            Volver a la tienda
-          </button>
+          <div className="text-center space-y-2">
+            <p className="text-gray-600">
+              Hemos enviado un correo con los detalles de tu compra.
+            </p>
+            <Link
+              to="/"
+              className="block w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Volver a la tienda
+            </Link>
+          </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
-
-export default SuccessPage;
