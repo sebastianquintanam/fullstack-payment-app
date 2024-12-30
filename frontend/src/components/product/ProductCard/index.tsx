@@ -1,22 +1,23 @@
+// ProductCard/index.tsx
+
 import React from 'react';
-import type { Product } from '../../../store/types';
 
 interface ProductCardProps {
-  id: number;
+  id: number; // Asegúrate que sea number, no string
   name: string;
   price: number;
-  description: string;
   stock: number;
+  description: string;
   onClick: (id: number) => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({
+export const ProductCard: React.FC<ProductCardProps> = ({
   id,
   name,
   price,
-  description,
   stock,
-  onClick,
+  description,
+  onClick
 }) => {
   return (
     <div className="bg-white rounded-lg shadow-lg transition-shadow">

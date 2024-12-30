@@ -35,6 +35,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
   });
   const [cardType, setCardType] = useState<string>('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [processingStep, setProcessingStep] = useState<string>('');
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
@@ -46,7 +47,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
     }));
 
     const detectedType = cardValidations.getCardType(value);
-    setCardType(detectedType); // Actualiza el tipo de tarjeta detectado
+    setCardType(detectedType);
   };
 
   const validateForm = (): boolean => {
@@ -73,42 +74,69 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
     return Object.keys(newErrors).length === 0;
   };
 
+  const tokenizeCardData = async () => {
+    try {
+      setProcessingStep('Procesando tarjeta...');
+      const cardData = {
+        number: formData.cardNumber.replace(/\s/g, ''),
+        cvc: formData.cvv,
+        exp_month: formData.expiryMonth,
+        exp_year: formData.expiryYear,
+        card_holder: formData.cardHolder
+      };
+
+      return await wompiService.tokenizeCard(cardData);
+    } catch (error) {
+      throw new Error('Error al procesar la tarjeta');
+    }
+  };
+
   const handlePayment = async () => {
-    if (!selectedProduct) return;
+    if (!selectedProduct) {
+      setError('No se ha seleccionado ningún producto');
+      return;
+    }
 
     setIsProcessing(true);
     setError(null);
 
     try {
+      // Tokenización de la tarjeta
+      const cardToken = await tokenizeCardData();
+      setProcessingStep('Procesando pago...');
+
       const paymentData: WompiPaymentRequest = {
-        amount: selectedProduct.price * 100,
+        amount: selectedProduct.price * 100, // Convertimos a centavos
         currency: 'COP',
         payment_method: {
           type: 'CARD',
-          token: 'token_test' // Esto debería venir del formulario de tarjeta
+          token: cardToken
         },
         reference: `order_${Date.now()}`
       };
 
       const response = await wompiService.createPayment(paymentData);
 
-      if (response.status === 'APPROVED') {
+      if (response.data.status === 'APPROVED') {
+        // Actualizamos el stock
         dispatch(updateStock({
-          productId: Number(selectedProduct.id),
-          quantity: 1
+          productId: Number(selectedProduct.id), // Convertir a número
+          newStock: selectedProduct.stock - 1
         }));
 
+        // Actualizamos el estado de la transacción
         dispatch(setTransactionComplete({
-                  id: response.id,
-                  reference: response.reference,
-                  amount: selectedProduct.price,
-                  productId: Number(selectedProduct.id)
-                }));
+            id: response.data.id.toString(),
+            reference: response.data.reference,
+            amount: response.data.amount_in_cents / 100,
+            productId: Number(selectedProduct.id) // Convertir a número
+          }));
 
+        setProcessingStep('¡Pago completado!');
         onPaymentComplete();
         navigate('/success');
       } else {
-        throw new Error('Pago rechazado por la pasarela de pagos');
+        throw new Error(`Pago ${response.data.status.toLowerCase()}`);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error procesando el pago';
@@ -118,6 +146,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
     } finally {
       setIsProcessing(false);
       setShowSummary(false);
+      setProcessingStep('');
     }
   };
 
@@ -128,9 +157,14 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
     }
   };
 
+  // Renderizado del formulario
   return (
     <div className="w-full max-w-md mx-auto p-6">
-      {cardType && <div className="card-type-indicator">Tipo de tarjeta: {cardType}</div>}
+      {cardType && (
+        <div className="mb-4 p-2 bg-gray-100 rounded">
+          Tipo de tarjeta: {cardType}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
@@ -160,7 +194,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
             value={formData.cardHolder}
             onChange={e => setFormData(prev => ({
               ...prev,
-              cardHolder: e.target.value
+              cardHolder: e.target.value.toUpperCase()
             }))}
             className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
             placeholder="Como aparece en la tarjeta"
@@ -229,6 +263,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
 
         {error && (
           <Alert variant="destructive">{error}</Alert>
+        )}
+
+        {processingStep && (
+          <div className="text-sm text-gray-600 text-center">
+            {processingStep}
+          </div>
         )}
 
         <button 

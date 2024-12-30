@@ -2,14 +2,15 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppSelector } from '../../store/hooks';
+import { useSelector } from 'react-redux';
 import { CheckCircle2 } from 'lucide-react';
+import type { RootState } from '../../store/store';
 
-const SuccessPage: React.FC = () => {
+export const SuccessPage: React.FC = () => {
   const navigate = useNavigate();
-  const transaction = useAppSelector(state => state.transaction.currentTransaction);
+  const transaction = useSelector((state: RootState) => state.transactions.currentTransaction);
 
-  // Redirigir si no hay transacción
+  // Redirect if no transaction exists
   useEffect(() => {
     if (!transaction) {
       navigate('/');
@@ -17,7 +18,7 @@ const SuccessPage: React.FC = () => {
   }, [transaction, navigate]);
 
   if (!transaction) {
-    return null; // Si no hay transacción, no renderiza nada (protección adicional)
+    return null; // Render nothing if no transaction (additional safeguard)
   }
 
   return (
@@ -33,12 +34,12 @@ const SuccessPage: React.FC = () => {
             Tu transacción se ha completado correctamente
           </p>
           
-          {/* Detalles de la transacción */}
+          {/* Transaction details */}
           <div className="bg-gray-50 p-4 rounded text-left">
             <p className="text-sm text-gray-500">Referencia de pago:</p>
             <p className="font-mono text-gray-800">{transaction.reference}</p>
             <p className="text-sm text-gray-500 mt-2">Monto:</p>
-            <p className="font-bold text-gray-800">${transaction.amount.toFixed(2)}</p>
+            <p className="font-bold text-gray-800">${(transaction.amount / 100).toFixed(2)}</p>
           </div>
 
           <button

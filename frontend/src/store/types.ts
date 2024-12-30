@@ -22,6 +22,8 @@ export interface Product {
   }
   
   export interface TransactionState {
+    error: string | null;
+    currentTransaction: Transaction | null;
     current: Transaction | null;
     history: Transaction[];
   }
@@ -37,7 +39,7 @@ export interface Product {
   }
 
   // Añadir estas interfaces al archivo de tipos existente
-export interface CardTokenizationRequest {
+    export interface CardTokenizationRequest {
     number: string;
     cvc: string;
     exp_month: string;

@@ -2,12 +2,13 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppSelector } from '../../store/hooks';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../store';
 import { XCircle } from 'lucide-react';
 
 const ErrorPage: React.FC = () => {
   const navigate = useNavigate();
-  const error = useAppSelector(state => state.transactions.error);
+  const error = useSelector((state: RootState) => state.transactions.error);
 
   return (
     <div className="container mx-auto px-4 py-16 text-center">
