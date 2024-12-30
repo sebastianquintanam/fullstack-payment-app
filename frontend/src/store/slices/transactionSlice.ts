@@ -2,65 +2,48 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { Transaction } from '../types';
 
 interface TransactionState {
-  currentTransaction: {
-    id: string;
-    status: 'PENDING' | 'COMPLETED' | 'FAILED';
-    amount: number;
-    reference: string;
-  } | null;
-  loading: boolean;
-  error: string | null;
+  current: Transaction | null;
   history: Transaction[];
 }
 
 const initialState: TransactionState = {
-  currentTransaction: null,
-  loading: false,
-  error: null,
+  current: null,
   history: []
 };
 
-export const transactionSlice = createSlice({
+const transactionSlice = createSlice({
   name: 'transaction',
   initialState,
   reducers: {
-    setTransactionPending: (state, action: PayloadAction<any>) => {
-      state.currentTransaction = {
-        ...action.payload,
-        status: 'PENDING'
-      };
-      state.loading = true;
-    },
-    setTransactionComplete: (state, action) => {
-      if (state.currentTransaction) {
-        state.currentTransaction.status = 'COMPLETED';
-        state.history.push({ ...state.currentTransaction });
-      }
-      state.loading = false;
-    },
-    setTransactionFailed: (state, action) => {
-      if (state.currentTransaction) {
-        state.currentTransaction.status = 'FAILED';
-      }
-      state.loading = false;
-      state.error = action.payload;
-    },
     setTransaction: (state, action: PayloadAction<Transaction>) => {
-      state.currentTransaction = action.payload;
+      state.current = action.payload;
       state.history.push(action.payload);
     },
+    updateTransactionStatus: (
+      state, 
+      action: PayloadAction<{ 
+        id: string; 
+        status: Transaction['status'] 
+      }>
+    ) => {
+      if (state.current && state.current.id === action.payload.id) {
+        state.current.status = action.payload.status;
+      }
+      const historyTransaction = state.history.find(t => t.id === action.payload.id);
+      if (historyTransaction) {
+        historyTransaction.status = action.payload.status;
+      }
+    },
     clearTransaction: (state) => {
-      state.currentTransaction = null;
+      state.current = null;
     }
   }
 });
 
-export const {
-  setTransactionPending,
-  setTransactionComplete,
-  setTransactionFailed,
-  setTransaction,
-  clearTransaction
+export const { 
+  setTransaction, 
+  updateTransactionStatus, 
+  clearTransaction 
 } = transactionSlice.actions;
 
 export default transactionSlice.reducer;

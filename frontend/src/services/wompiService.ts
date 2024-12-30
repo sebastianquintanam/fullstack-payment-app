@@ -1,5 +1,4 @@
-const WOMPI_PUBLIC_KEY = 'pub_stagtest_g2u0HQd3ZMh05hsSgTS2lUV8t3s4mOt7';
-const WOMPI_API_URL = 'https://api-sandbox.co.uat.wompi.dev/v1';
+import { WompiPaymentRequest } from '../store/types';
 
 export interface WompiTransactionParams {
   amount: number;
@@ -23,15 +22,19 @@ export interface WompiPaymentResponse {
   id: string;
   status: string;
   amount: number;
+  reference: string;
 }
 
-const wompiService = {
+class WompiService {
+  private readonly API_URL = 'https://api-sandbox.co.uat.wompi.dev/v1';
+  private readonly PUBLIC_KEY = 'pub_stagtest_g2u0HQd3ZMh05hsSgTS2lUV8t3s4mOt7';
+
   async createTransaction(params: WompiTransactionParams): Promise<WompiResponse> {
     try {
-      const response = await fetch(`${WOMPI_API_URL}/transactions`, {
+      const response = await fetch(`${this.API_URL}/transactions`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${WOMPI_PUBLIC_KEY}`,
+          'Authorization': `Bearer ${this.PUBLIC_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -68,21 +71,21 @@ const wompiService = {
         ? error 
         : new Error('Error desconocido al crear la transacción');
     }
-  },
+  }
 
-  async createPayment(paymentData: any): Promise<WompiPaymentResponse> {
+  async createPayment(paymentData: WompiPaymentRequest): Promise<WompiPaymentResponse> {
     try {
-      const response = await fetch(`${WOMPI_API_URL}/payments`, {
+      const response = await fetch(`${this.API_URL}/transactions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${WOMPI_PUBLIC_KEY}`
+          'Authorization': `Bearer ${this.PUBLIC_KEY}`
         },
         body: JSON.stringify(paymentData)
       });
 
       if (!response.ok) {
-        throw new Error('Error al crear el pago');
+        throw new Error('Payment creation failed');
       }
 
       const data = await response.json();
@@ -90,6 +93,7 @@ const wompiService = {
         id: data.data.id,
         status: data.data.status,
         amount: data.data.amount_in_cents / 100,
+        reference: data.data.reference
       };
     } catch (error) {
       console.error('Error creating payment:', error);
@@ -97,7 +101,7 @@ const wompiService = {
         ? error 
         : new Error('Error desconocido al crear el pago');
     }
-  },
+  }
 
   async getTokenizedCard(cardData: {
     number: string;
@@ -106,10 +110,10 @@ const wompiService = {
     cvc: string;
   }): Promise<string> {
     try {
-      const response = await fetch(`${WOMPI_API_URL}/tokens/cards`, {
+      const response = await fetch(`${this.API_URL}/tokens/cards`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${WOMPI_PUBLIC_KEY}`,
+          'Authorization': `Bearer ${this.PUBLIC_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(cardData)
@@ -128,6 +132,7 @@ const wompiService = {
         : new Error('Error desconocido al tokenizar la tarjeta');
     }
   }
-};
+}
 
+const wompiService = new WompiService();
 export default wompiService;

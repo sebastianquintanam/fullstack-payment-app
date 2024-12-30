@@ -1,31 +1,27 @@
 // src/pages/ProductPage/index.tsx
 
 import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchProducts } from '../../store/slices/productSlice';
-import ProductCard from '../../components/product/ProductCard';
+import { ProductCard } from '../../components/product/ProductCard';
+import { fetchProducts, setSelectedProduct } from '../../store/slices/productSlice';
+import type { RootState } from '../../store';
 import type { Product } from '../../store/types';
 
 const ProductPage: React.FC = () => {
-  // Hooks para manejar el estado y la navegación
-  const dispatch = useAppDispatch();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
-  
-  // Obtenemos el estado de los productos usando el selector tipado
-  const { products, loading, error } = useAppSelector((state) => state.products);
+  const { products, loading, error } = useSelector((state: RootState) => state.products);
 
-  // Cargamos los productos cuando el componente se monta
   useEffect(() => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
-  // Función para manejar la selección de un producto
-  const handleProduct = (product: Product) => {
+  const handleProductSelect = (product: Product) => {
+    dispatch(setSelectedProduct(product));
     navigate(`/checkout/${product.id}`);
   };
 
-  // Renderizado condicional según el estado
   if (loading) {
     return <div className="text-center p-8">Cargando productos...</div>;
   }
@@ -37,20 +33,13 @@ const ProductPage: React.FC = () => {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-8">Productos Disponibles</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {products.map((product) => (
-          <div key={product.id} className="border rounded-lg p-4 shadow-md">
-            <h2 className="text-xl font-semibold">{product.name}</h2>
-            <p className="text-gray-600">{product.description}</p>
-            <p className="font-bold text-lg">Precio: ${product.price}</p>
-            <p className="text-sm text-gray-500">Stock: {product.stock}</p>
-            <button
-              onClick={() => handleProduct(product)}
-              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              Comprar Ahora
-            </button>
-          </div>
+          <ProductCard
+            key={product.id}
+            product={product}
+            onSelect={() => handleProductSelect(product)}
+          />
         ))}
       </div>
     </div>

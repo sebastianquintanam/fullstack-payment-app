@@ -1,32 +1,29 @@
 // src/components/payment/PaymentForm.tsx
 
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { cardValidations } from '../../utils/cardValidations';
-import { wompiService } from '../../services/wompiService';
-import { productService } from '../../services/productService';
+import wompiService from '../../services/wompiService';
 import { PaymentSummary } from './PaymentSummary';
 import { Alert } from '../../components/ui/alert';
+import { cardValidations } from '../../utils/cardValidations';
 import { updateStock } from '../../store/slices/productSlice';
 import { setTransactionComplete, setTransactionFailed } from '../../store/slices/transactionSlice';
 import type { AppDispatch } from '../../store/store';
+import type { RootState } from '../../store';
+import type { WompiPaymentRequest } from '../../store/types';
 
 interface PaymentFormProps {
-  productId: string;
-  amount: number;
-  onPaymentComplete?: () => void;
+  onPaymentComplete: () => void;
 }
 
-export const PaymentForm: React.FC<PaymentFormProps> = ({ 
-  productId, 
-  amount, 
-  onPaymentComplete 
-}) => {
+export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const [showSummary, setShowSummary] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const selectedProduct = useSelector((state: RootState) => state.products.selectedProduct);
 
   // Estado del formulario y tipo de tarjeta
   const [formData, setFormData] = useState({
@@ -76,60 +73,47 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handlePaymentProcess = async () => {
+  const handlePayment = async () => {
+    if (!selectedProduct) return;
+
+    setIsProcessing(true);
+    setError(null);
+
     try {
-      setIsProcessing(true);
+      const paymentData: WompiPaymentRequest = {
+        amount: selectedProduct.price * 100,
+        currency: 'COP',
+        payment_method: {
+          type: 'CARD',
+          token: 'token_test' // Esto debería venir del formulario de tarjeta
+        },
+        reference: `order_${Date.now()}`
+      };
 
-      // 1. Tokenizar la tarjeta
-      const cardToken = await wompiService.getTokenizedCard({
-        number: formData.cardNumber.replace(/\s/g, ''),
-        exp_month: formData.expiryMonth,
-        exp_year: formData.expiryYear,
-        cvc: formData.cvv
-      });
+      const response = await wompiService.createPayment(paymentData);
 
-      // 2. Crear la transacción
-      const transaction = await wompiService.createTransaction({
-        amount,
-        cardToken,
-        reference: `payment-${Date.now()}-${productId}`
-      });
-
-      // 3. Procesar resultado
-      if (transaction.status === 'APPROVED') {
-        await productService.updateStock({
-          productId: Number(productId),
+      if (response.status === 'APPROVED') {
+        dispatch(updateStock({
+          productId: selectedProduct.id,
           quantity: 1
-        });
-
-        dispatch(updateStock({ 
-          productId: Number(productId), 
-          quantity: 1 
         }));
 
         dispatch(setTransactionComplete({
-          id: transaction.id,
-          reference: transaction.reference,
-          amount,
-          productId: Number(productId)
+          id: response.id,
+          reference: response.reference,
+          amount: selectedProduct.price,
+          productId: selectedProduct.id
         }));
 
-        if (onPaymentComplete) {
-          onPaymentComplete();
-        }
-
+        onPaymentComplete();
         navigate('/success');
       } else {
         throw new Error('Pago rechazado por la pasarela de pagos');
       }
-
-    } catch (error) {
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Error procesando el pago';
-
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error procesando el pago';
       dispatch(setTransactionFailed(errorMessage));
-      setErrors({ submit: errorMessage });
+      setError(errorMessage);
       navigate('/error');
     } finally {
       setIsProcessing(false);
@@ -139,7 +123,6 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (validateForm()) {
       setShowSummary(true);
     }
@@ -244,8 +227,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           </div>
         </div>
 
-        {errors.submit && (
-          <Alert variant="destructive">{errors.submit}</Alert>
+        {error && (
+          <Alert variant="destructive">{error}</Alert>
         )}
 
         <button 
@@ -260,10 +243,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
       {showSummary && (
         <PaymentSummary
-          amount={amount}
+          amount={selectedProduct?.price || 0}
           baseFee={5.00}
           deliveryFee={10.00}
-          onConfirm={handlePaymentProcess}
+          onConfirm={handlePayment}
           onCancel={() => setShowSummary(false)}
           isProcessing={isProcessing}
         />
