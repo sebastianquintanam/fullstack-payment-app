@@ -1,35 +1,38 @@
 // src/components/payment/PaymentSummary.tsx
+
 import React from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '../../components/ui/dialog';
 
 interface PaymentSummaryProps {
+  isOpen: boolean;
+  onClose: () => void;
   amount: number;
   baseFee: number;
   deliveryFee: number;
   onConfirm: () => void;
-  onCancel: () => void;
   isProcessing?: boolean;
 }
 
 export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
+  isOpen,
+  onClose,
   amount,
   baseFee,
   deliveryFee,
   onConfirm,
-  onCancel,
-  isProcessing = false
+  isProcessing = false,
 }) => {
   // Calculamos el total sumando el monto, cargo base y envío
   const total = amount + baseFee + deliveryFee;
 
   return (
-    <Dialog open onOpenChange={onCancel}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Resumen de Pago</DialogTitle>
         </DialogHeader>
@@ -66,7 +69,7 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
             <button
               onClick={onConfirm}
               disabled={isProcessing}
-              className="flex-1 bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 
+              className="flex-1 bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 \
                        disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               {isProcessing ? (
@@ -82,9 +85,9 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
               )}
             </button>
             <button
-              onClick={onCancel}
+              onClick={onClose}
               disabled={isProcessing}
-              className="flex-1 bg-gray-100 text-gray-700 p-3 rounded-lg hover:bg-gray-200 
+              className="flex-1 bg-gray-100 text-gray-700 p-3 rounded-lg hover:bg-gray-200 \
                        disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               Cancelar

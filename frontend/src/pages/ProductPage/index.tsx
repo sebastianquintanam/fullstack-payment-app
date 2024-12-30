@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchProducts } from '../../store/slices/productSlice';
 import ProductCard from '../../components/product/ProductCard';
+import type { Product } from '../../store/types';
 
 const ProductPage: React.FC = () => {
   // Hooks para manejar el estado y la navegación
@@ -19,9 +20,9 @@ const ProductPage: React.FC = () => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
-  // Función para manejar la compra de un producto
-  const handleBuyClick = (productId: number) => {
-    navigate(`/checkout/${productId}`);
+  // Función para manejar la selección de un producto
+  const handleProduct = (product: Product) => {
+    navigate(`/checkout/${product.id}`);
   };
 
   // Renderizado condicional según el estado
@@ -30,7 +31,7 @@ const ProductPage: React.FC = () => {
   }
 
   if (error) {
-    return <div className="text-center text-red-600 p-8">{error}</div>;
+    return <div className="text-center text-red-600 p-8">Error: {error}</div>;
   }
 
   return (
@@ -38,11 +39,18 @@ const ProductPage: React.FC = () => {
       <h1 className="text-3xl font-bold mb-8">Productos Disponibles</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            {...product}
-            onBuyClick={handleBuyClick}
-          />
+          <div key={product.id} className="border rounded-lg p-4 shadow-md">
+            <h2 className="text-xl font-semibold">{product.name}</h2>
+            <p className="text-gray-600">{product.description}</p>
+            <p className="font-bold text-lg">Precio: ${product.price}</p>
+            <p className="text-sm text-gray-500">Stock: {product.stock}</p>
+            <button
+              onClick={() => handleProduct(product)}
+              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Comprar Ahora
+            </button>
+          </div>
         ))}
       </div>
     </div>

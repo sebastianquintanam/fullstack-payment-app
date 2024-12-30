@@ -1,4 +1,5 @@
 // src/components/payment/PaymentForm.tsx
+
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -6,7 +7,7 @@ import { cardValidations } from '../../utils/cardValidations';
 import { wompiService } from '../../services/wompiService';
 import { productService } from '../../services/productService';
 import { PaymentSummary } from './PaymentSummary';
-import { Alert } from '@/components/ui/alert';
+import { Alert } from '../../components/ui/alert';
 import { updateStock } from '../../store/slices/productSlice';
 import { setTransactionComplete, setTransactionFailed } from '../../store/slices/transactionSlice';
 import type { AppDispatch } from '../../store/store';
@@ -26,7 +27,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const navigate = useNavigate();
   const [showSummary, setShowSummary] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
+  // Estado del formulario y tipo de tarjeta
   const [formData, setFormData] = useState({
     cardNumber: '',
     cardHolder: '',
@@ -34,34 +36,34 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     expiryYear: '',
     cvv: '',
   });
-
+  const [cardType, setCardType] = useState<string>('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
     const formatted = value.match(/.{1,4}/g)?.join(' ') || value;
-    
+
     setFormData(prev => ({
       ...prev,
       cardNumber: formatted
     }));
 
-    const cardType = cardValidations.getCardType(value);
-    // TODO: Implementar visualización del logo de la tarjeta
+    const detectedType = cardValidations.getCardType(value);
+    setCardType(detectedType); // Actualiza el tipo de tarjeta detectado
   };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     const cleanCardNumber = formData.cardNumber.replace(/\s/g, '');
-    
+
     if (!cardValidations.validateCardNumber(cleanCardNumber)) {
       newErrors.cardNumber = 'Número de tarjeta inválido';
     }
-    
+
     if (!cardValidations.validateExpiry(formData.expiryMonth, formData.expiryYear)) {
       newErrors.expiry = 'Fecha de expiración inválida';
     }
-    
+
     if (!cardValidations.validateCVV(formData.cvv)) {
       newErrors.cvv = 'CVV inválido';
     }
@@ -95,19 +97,16 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
       // 3. Procesar resultado
       if (transaction.status === 'APPROVED') {
-        // Actualizar stock
         await productService.updateStock({
           productId: Number(productId),
           quantity: 1
         });
-        
-        // Actualizar estado global
+
         dispatch(updateStock({ 
           productId: Number(productId), 
           quantity: 1 
         }));
-        
-        // Registrar transacción exitosa
+
         dispatch(setTransactionComplete({
           id: transaction.id,
           reference: transaction.reference,
@@ -115,12 +114,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           productId: Number(productId)
         }));
 
-        // Llamar callback si existe
         if (onPaymentComplete) {
           onPaymentComplete();
         }
 
-        // Redirigir a página de éxito
         navigate('/success');
       } else {
         throw new Error('Pago rechazado por la pasarela de pagos');
@@ -130,7 +127,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       const errorMessage = error instanceof Error 
         ? error.message 
         : 'Error procesando el pago';
-      
+
       dispatch(setTransactionFailed(errorMessage));
       setErrors({ submit: errorMessage });
       navigate('/error');
@@ -142,7 +139,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
       setShowSummary(true);
     }
@@ -150,8 +147,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
   return (
     <div className="w-full max-w-md mx-auto p-6">
+      {cardType && <div className="card-type-indicator">Tipo de tarjeta: {cardType}</div>}
+
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Campo de Número de Tarjeta */}
         <div className="space-y-2">
           <label className="block text-sm font-medium">
             Número de Tarjeta
@@ -170,7 +168,6 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           )}
         </div>
 
-        {/* Campo de Titular */}
         <div className="space-y-2">
           <label className="block text-sm font-medium">
             Titular de la Tarjeta
@@ -191,7 +188,6 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           )}
         </div>
 
-        {/* Campos de Fecha y CVV */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="block text-sm font-medium">

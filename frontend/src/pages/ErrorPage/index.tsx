@@ -1,4 +1,5 @@
 // src/pages/ErrorPage/index.tsx
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../store/hooks';
@@ -17,8 +18,8 @@ const ErrorPage: React.FC = () => {
         </h1>
         
         <div className="space-y-4">
-          <p className="text-gray-600">
-            {error || 'Hubo un problema procesando tu pago'}
+          <p className="text-gray-600 bg-red-50 p-4 rounded-lg">
+            {error || 'Hubo un problema procesando tu pago. Por favor, inténtalo nuevamente.'}
           </p>
 
           <div className="space-y-2">
@@ -35,6 +36,14 @@ const ErrorPage: React.FC = () => {
             >
               Volver a la tienda
             </button>
+
+            {/* Opción para contacto de soporte */}
+            <p className="text-sm text-gray-500 mt-4">
+              Si el problema persiste, contáctanos en{' '}
+              <a href="mailto:soporte@miapp.com" className="text-blue-600 hover:underline">
+                soporte@miapp.com
+              </a>
+            </p>
           </div>
         </div>
       </div>

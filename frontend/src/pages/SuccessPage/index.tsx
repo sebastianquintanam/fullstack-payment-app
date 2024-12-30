@@ -1,4 +1,5 @@
 // src/pages/SuccessPage/index.tsx
+
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../store/hooks';
@@ -15,6 +16,10 @@ const SuccessPage: React.FC = () => {
     }
   }, [transaction, navigate]);
 
+  if (!transaction) {
+    return null; // Si no hay transacción, no renderiza nada (protección adicional)
+  }
+
   return (
     <div className="container mx-auto px-4 py-16 text-center">
       <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg">
@@ -28,14 +33,17 @@ const SuccessPage: React.FC = () => {
             Tu transacción se ha completado correctamente
           </p>
           
-          <div className="bg-gray-50 p-4 rounded">
+          {/* Detalles de la transacción */}
+          <div className="bg-gray-50 p-4 rounded text-left">
             <p className="text-sm text-gray-500">Referencia de pago:</p>
-            <p className="font-mono">{transaction?.reference}</p>
+            <p className="font-mono text-gray-800">{transaction.reference}</p>
+            <p className="text-sm text-gray-500 mt-2">Monto:</p>
+            <p className="font-bold text-gray-800">${transaction.amount.toFixed(2)}</p>
           </div>
 
           <button
             onClick={() => navigate('/')}
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 mt-4"
           >
             Volver a la tienda
           </button>

@@ -1,4 +1,5 @@
 // src/components/ui/dialog.tsx
+
 import React from 'react';
 
 interface DialogProps {
