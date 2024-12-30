@@ -11,7 +11,8 @@ const transactionSlice = createSlice({
   initialState,
   reducers: {
     setTransactionPending: (state, action: PayloadAction<Transaction>) => {
-      state.current = { ...action.payload, status: 'PENDING' };
+      state.current = action.payload;
+      state.history.push(action.payload);
     },
     setTransactionComplete: (state, action: PayloadAction<string>) => {
       if (state.current && state.current.id === action.payload) {

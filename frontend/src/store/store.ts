@@ -2,14 +2,16 @@
 
 import { configureStore } from '@reduxjs/toolkit';
 import productReducer from './slices/productSlice';
+import transactionReducer from './slices/transactionSlice';
 
-// Configuración principal del store de Redux
-export const store = configureStore({
+const store = configureStore({
   reducer: {
     products: productReducer,
-  },
+    transactions: transactionReducer
+  }
 });
 
-// Exportamos los tipos para usar con TypeScript
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+
+export default store;

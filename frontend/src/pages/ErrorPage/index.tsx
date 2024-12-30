@@ -7,7 +7,7 @@ import { XCircle } from 'lucide-react';
 
 const ErrorPage: React.FC = () => {
   const navigate = useNavigate();
-  const error = useAppSelector(state => state.transaction.error);
+  const error = useAppSelector(state => state.transactions.error);
 
   return (
     <div className="container mx-auto px-4 py-16 text-center">

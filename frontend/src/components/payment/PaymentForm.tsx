@@ -10,7 +10,7 @@ import { cardValidations } from '../../utils/cardValidations';
 import { updateStock } from '../../store/slices/productSlice';
 import { setTransactionComplete, setTransactionFailed } from '../../store/slices/transactionSlice';
 import type { AppDispatch } from '../../store/store';
-import type { RootState } from '../../store';
+import type { RootState } from '../../store/store';
 import type { WompiPaymentRequest } from '../../store/types';
 
 interface PaymentFormProps {
@@ -94,16 +94,16 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
 
       if (response.status === 'APPROVED') {
         dispatch(updateStock({
-          productId: selectedProduct.id,
+          productId: Number(selectedProduct.id),
           quantity: 1
         }));
 
         dispatch(setTransactionComplete({
-          id: response.id,
-          reference: response.reference,
-          amount: selectedProduct.price,
-          productId: selectedProduct.id
-        }));
+                  id: response.id,
+                  reference: response.reference,
+                  amount: selectedProduct.price,
+                  productId: Number(selectedProduct.id)
+                }));
 
         onPaymentComplete();
         navigate('/success');

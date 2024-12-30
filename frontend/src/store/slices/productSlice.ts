@@ -11,7 +11,7 @@ const initialState: ProductState = {
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
   async () => {
-    // Implementar llamada a API
+    // Implementar llamada API
     return [];
   }
 );
@@ -20,17 +20,13 @@ const productSlice = createSlice({
   name: 'products',
   initialState,
   reducers: {
-    setProducts: (state, action: PayloadAction<Product[]>) => {
-      state.products = action.payload;
-    },
     setSelectedProduct: (state, action: PayloadAction<Product>) => {
       state.selectedProduct = action.payload;
     },
-    updateStock: (state, action: PayloadAction<{ productId: string; newStock: number }>) => {
-      const { productId, newStock } = action.payload;
-      const product = state.products.find(p => p.id === productId);
+    updateStock: (state, action: PayloadAction<{ productId: number; newStock: number }>) => {
+      const product = state.products.find(p => p.id === action.payload.productId.toString());
       if (product) {
-        product.stock = newStock;
+        product.stock = action.payload.newStock;
       }
     }
   },
@@ -50,5 +46,5 @@ const productSlice = createSlice({
   }
 });
 
-export const { setProducts, setSelectedProduct, updateStock } = productSlice.actions;
+export const { setSelectedProduct, updateStock } = productSlice.actions;
 export default productSlice.reducer;
