@@ -7,8 +7,7 @@ import { Alert } from '../../components/ui/alert';
 import { cardValidations } from '../../utils/cardValidations';
 import { updateStock } from '../../store/slices/productSlice';
 import { setTransactionComplete, setTransactionFailed } from '../../store/slices/transactionSlice';
-import type { AppDispatch } from '../../store/store';
-import type { RootState } from '../../store/store';
+import type { AppDispatch, RootState } from '../../store/store';
 import type { WompiPaymentRequest } from '../../store/types';
 
 interface PaymentFormProps {
@@ -18,11 +17,9 @@ interface PaymentFormProps {
 export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [showSummary, setShowSummary] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const selectedProduct = useSelector((state: RootState) => state.products.selectedProduct);
 
+  // Estados del formulario
   const [formData, setFormData] = useState({
     cardNumber: '',
     cardHolder: '',
@@ -30,13 +27,17 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
     expiryYear: '',
     cvv: '',
   });
-  const [cardType, setCardType] = useState<string>('');
+  const [cardType, setCardType] = useState<'visa' | 'mastercard' | 'unknown'>('unknown');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [processingStep, setProcessingStep] = useState<string>('');
 
+  // Manejadores de cambios en el formulario
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
-    const formatted = value.match(/.{1,4}/g)?.join(' ') || value;
+    const formatted = cardValidations.formatCardNumber(value);
 
     setFormData((prev) => ({
       ...prev,
@@ -45,43 +46,73 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
 
     const detectedType = cardValidations.getCardType(value);
     setCardType(detectedType);
+
+    // Limpiar error si existe
+    if (errors.cardNumber) {
+      setErrors(prev => {
+        const { cardNumber, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    let processedValue = value;
+
+    switch (name) {
+      case 'cardHolder':
+        processedValue = value.toUpperCase();
+        break;
+      case 'expiryMonth':
+        processedValue = value.replace(/\D/g, '').slice(0, 2);
+        break;
+      case 'expiryYear':
+        processedValue = value.replace(/\D/g, '').slice(0, 2);
+        break;
+      case 'cvv':
+        processedValue = value.replace(/\D/g, '').slice(0, 4);
+        break;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: processedValue
+    }));
+
+    // Limpiar error del campo específico
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-    const cleanCardNumber = formData.cardNumber.replace(/\s/g, '');
+    const validation = cardValidations.validateCardData({
+      number: formData.cardNumber.replace(/\s/g, ''),
+      card_holder: formData.cardHolder,
+      exp_month: formData.expiryMonth,
+      exp_year: formData.expiryYear,
+      cvc: formData.cvv
+    });
 
-    if (!cardValidations.validateCardNumber(cleanCardNumber)) {
-      newErrors.cardNumber = 'Número de tarjeta inválido';
-    }
-
-    if (!cardValidations.validateExpiry(formData.expiryMonth, formData.expiryYear)) {
-      newErrors.expiry = 'Fecha de expiración inválida';
-    }
-
-    if (!cardValidations.validateCVV(formData.cvv)) {
-      newErrors.cvv = 'CVV inválido';
-    }
-
-    if (!formData.cardHolder.trim()) {
-      newErrors.cardHolder = 'El nombre del titular es requerido';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(validation.errors);
+    return validation.isValid;
   };
 
+  // Lógica de pago
   const tokenizeCardData = async () => {
     setProcessingStep('Procesando tarjeta...');
-    const cardData = {
+    return wompiService.tokenizeCard({
       number: formData.cardNumber.replace(/\s/g, ''),
       cvc: formData.cvv,
       exp_month: formData.expiryMonth,
       exp_year: formData.expiryYear,
       card_holder: formData.cardHolder,
-    };
-
-    return wompiService.tokenizeCard(cardData);
+    });
   };
 
   const handlePayment = async () => {
@@ -110,22 +141,18 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
       const response = await wompiService.createPayment(paymentData);
 
       if (response.status === 'APPROVED') {
-        dispatch(
-          updateStock({
-            productId: Number(selectedProduct.id),
-            newStock: selectedProduct.stock - 1,
-          })
-        );
+        dispatch(updateStock({
+          productId: Number(selectedProduct.id),
+          newStock: selectedProduct.stock - 1,
+        }));
       
-        dispatch(
-          setTransactionComplete({
-            id: response.id,
-            reference: response.reference,
-            amount: response.amount / 100, // Convierte directamente si `response.amount` está en centavos
-            productId: Number(selectedProduct.id),
-            status: 'COMPLETED',
-          })
-        );
+        dispatch(setTransactionComplete({
+          id: response.id,
+          reference: response.reference,
+          amount: response.amount / 100,
+          productId: Number(selectedProduct.id),
+          status: 'COMPLETED',
+        }));
       
         setProcessingStep('¡Pago completado!');
         onPaymentComplete();
@@ -135,7 +162,11 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error procesando el pago';
-      dispatch(setTransactionFailed({ id: Date.now().toString(), status: 'FAILED', error: errorMessage }));
+      dispatch(setTransactionFailed({ 
+        id: Date.now().toString(), 
+        status: 'FAILED', 
+        error: errorMessage 
+      }));
       setError(errorMessage);
       navigate('/error');
     } finally {
@@ -154,75 +185,80 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
 
   return (
     <div className="w-full max-w-md mx-auto p-6">
-      {cardType && (
-        <div className="mb-4 p-2 bg-gray-100 rounded">
-          Tipo de tarjeta: {cardType}
-        </div>
-      )}
+      {/* Logo del tipo de tarjeta */}
+      <div className="flex justify-end h-8 mb-4">
+        {cardType !== 'unknown' && (
+          <img 
+            src={`/images/${cardType}.svg`} 
+            alt={`${cardType} logo`}
+            className="h-full object-contain"
+          />
+        )}
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Número de tarjeta */}
         <div className="space-y-2">
           <label className="block text-sm font-medium">Número de Tarjeta</label>
           <input
             type="text"
+            name="cardNumber"
             value={formData.cardNumber}
             onChange={handleCardNumberChange}
             maxLength={19}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            placeholder="xxxx xxxx xxxx xxxx"
+            className={`w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 ${
+              errors.cardNumber ? 'border-red-500' : 'border-gray-300'
+            }`}
+            placeholder="0000 0000 0000 0000"
             disabled={isProcessing}
           />
           {errors.cardNumber && <Alert variant="destructive">{errors.cardNumber}</Alert>}
         </div>
 
+        {/* Titular de la tarjeta */}
         <div className="space-y-2">
           <label className="block text-sm font-medium">Titular de la Tarjeta</label>
           <input
             type="text"
+            name="cardHolder"
             value={formData.cardHolder}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                cardHolder: e.target.value.toUpperCase(),
-              }))
-            }
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            placeholder="Como aparece en la tarjeta"
+            onChange={handleInputChange}
+            className={`w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 ${
+              errors.cardHolder ? 'border-red-500' : 'border-gray-300'
+            }`}
+            placeholder="NOMBRE COMO APARECE EN LA TARJETA"
             disabled={isProcessing}
           />
           {errors.cardHolder && <Alert variant="destructive">{errors.cardHolder}</Alert>}
         </div>
 
+        {/* Fecha de vencimiento y CVV */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="block text-sm font-medium">Fecha de Vencimiento</label>
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="text"
+                name="expiryMonth"
                 value={formData.expiryMonth}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    expiryMonth: e.target.value.replace(/\D/g, ''),
-                  }))
-                }
+                onChange={handleInputChange}
                 maxLength={2}
-                className="w-full p-2 border rounded"
+                className={`w-full p-2 border rounded ${
+                  errors.expiry ? 'border-red-500' : 'border-gray-300'
+                }`}
                 placeholder="MM"
                 disabled={isProcessing}
               />
               <input
                 type="text"
+                name="expiryYear"
                 value={formData.expiryYear}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    expiryYear: e.target.value.replace(/\D/g, ''),
-                  }))
-                }
+                onChange={handleInputChange}
                 maxLength={2}
-                className="w-full p-2 border rounded"
-                placeholder="YY"
+                className={`w-full p-2 border rounded ${
+                  errors.expiry ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="AA"
                 disabled={isProcessing}
               />
             </div>
@@ -233,15 +269,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
             <label className="block text-sm font-medium">CVV</label>
             <input
               type="password"
+              name="cvv"
               value={formData.cvv}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  cvv: e.target.value.replace(/\D/g, ''),
-                }))
-              }
+              onChange={handleInputChange}
               maxLength={4}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${
+                errors.cvv ? 'border-red-500' : 'border-gray-300'
+              }`}
               placeholder="***"
               disabled={isProcessing}
             />
@@ -257,7 +291,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           disabled={isProcessing}
         >
           {isProcessing ? 'Procesando...' : 'Continuar al pago'}
