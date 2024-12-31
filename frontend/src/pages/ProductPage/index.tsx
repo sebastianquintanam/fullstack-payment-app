@@ -8,16 +8,16 @@ import type { Product } from '../../types/product.types';
 export const ProductPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-
-  // Obtenemos los datos del estado global
-  const { items: products, loading, error } = useSelector((state: RootState) => state.products);
-
-  // Disparamos la acción para obtener los productos al cargar la página
+  
+  const { products, loading, error } = useSelector((state: RootState) => state.products);
+  
   useEffect(() => {
-    dispatch(fetchProducts());
-  }, [dispatch]);
+    // Solo cargar si no hay productos
+    if (!products?.length) {
+      dispatch(fetchProducts());
+    }
+  }, [dispatch, products?.length]);
 
-  // Maneja el clic en un producto
   const handleProductClick = (id: number) => {
     const selectedProduct = products?.find((product: Product) => product.id === id);
     if (selectedProduct) {
@@ -26,32 +26,42 @@ export const ProductPage: React.FC = () => {
     }
   };
 
-  // Muestra un mensaje mientras los productos se cargan
   if (loading) {
-    return <div>Cargando productos...</div>;
+    return (
+      <div className="flex justify-center items-center p-4">
+        <p>Cargando productos...</p>
+      </div>
+    );
   }
 
-  // Muestra un mensaje de error si ocurre un problema al cargar los productos
   if (error) {
-    return <div>Error: {error}</div>;
+    return (
+      <div className="flex justify-center items-center p-4 text-red-500">
+        <p>Error: {error}</p>
+      </div>
+    );
   }
 
-  // Renderiza la lista de productos
   return (
-    <div>
-      <h1>Productos</h1>
-      {products && products.length > 0 ? (
-        <ul>
-          {products.map((product: Product) => (
-            <li key={product.id}>
-              {product.name} - ${product.price.toFixed(2)}
-              <button onClick={() => handleProductClick(product.id)}>Ver detalles</button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <div>No hay productos disponibles</div>
-      )}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+      {products?.map((product: Product) => (
+        <div 
+          key={product.id}
+          className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+          onClick={() => handleProductClick(product.id)}
+        >
+          <h2 className="text-2xl font-bold mb-2">{product.name}</h2>
+          <p className="text-gray-600 mb-4">{product.description}</p>
+          <div className="flex justify-between items-center">
+            <p className="text-xl font-semibold">
+              ${product.price.toFixed(2)}
+            </p>
+            <p className="text-sm text-gray-500">
+              Stock: {product.stock}
+            </p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

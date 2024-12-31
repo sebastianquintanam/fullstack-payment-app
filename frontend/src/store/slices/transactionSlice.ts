@@ -8,16 +8,15 @@ const initialState: TransactionState = {
   error: null, // Mensaje de error relacionado con las transacciones
 };
 
-// Función auxiliar para actualizar el historial
+// Función auxiliar para actualizar el historial de manera pura
 const updateTransactionInHistory = (
   history: Transaction[],
   id: string,
   updates: Partial<Transaction>
-) => {
-  const transaction = history.find((transaction) => transaction.id === id);
-  if (transaction) {
-    Object.assign(transaction, updates);
-  }
+): Transaction[] => {
+  return history.map((transaction) =>
+    transaction.id === id ? { ...transaction, ...updates } : transaction
+  );
 };
 
 const transactionSlice = createSlice({
@@ -29,7 +28,14 @@ const transactionSlice = createSlice({
      */
     setTransactionPending: (state, action: PayloadAction<Transaction>) => {
       state.currentTransaction = action.payload;
-      state.history.push(action.payload);
+
+      // Evita duplicados en el historial
+      const existingTransaction = state.history.find(
+        (transaction) => transaction.id === action.payload.id
+      );
+      if (!existingTransaction) {
+        state.history.push(action.payload);
+      }
     },
 
     /**
@@ -37,16 +43,30 @@ const transactionSlice = createSlice({
      */
     setTransactionComplete: (
       state,
-      action: PayloadAction<{ id: string; status: 'COMPLETED'; reference: string; amount: number; productId: number }>
+      action: PayloadAction<{
+        id: string;
+        status: 'COMPLETED';
+        reference: string;
+        amount: number;
+        productId: number;
+      }>
     ) => {
       const { id, status, reference, amount, productId } = action.payload;
 
       if (state.currentTransaction && state.currentTransaction.id === id) {
-        state.currentTransaction.status = status;
-        state.currentTransaction.reference = reference;
-        state.currentTransaction.amount = amount;
-        state.currentTransaction.productId = productId;
-        updateTransactionInHistory(state.history, id, { status, reference, amount, productId });
+        state.currentTransaction = {
+          ...state.currentTransaction,
+          status,
+          reference,
+          amount,
+          productId,
+        };
+        state.history = updateTransactionInHistory(state.history, id, {
+          status,
+          reference,
+          amount,
+          productId,
+        });
       }
     },
 
@@ -60,9 +80,14 @@ const transactionSlice = createSlice({
       const { id, status, error } = action.payload;
 
       if (state.currentTransaction && state.currentTransaction.id === id) {
-        state.currentTransaction.status = status;
+        state.currentTransaction = {
+          ...state.currentTransaction,
+          status,
+        };
         state.error = error;
-        updateTransactionInHistory(state.history, id, { status });
+        state.history = updateTransactionInHistory(state.history, id, {
+          status,
+        });
       }
     },
 
@@ -73,6 +98,13 @@ const transactionSlice = createSlice({
       state.currentTransaction = null;
       state.error = null;
     },
+
+    /**
+     * Limpia todos los errores relacionados con transacciones.
+     */
+    clearTransactionError: (state) => {
+      state.error = null;
+    },
   },
 });
 
@@ -81,6 +113,7 @@ export const {
   setTransactionComplete,
   setTransactionFailed,
   clearCurrentTransaction,
+  clearTransactionError,
 } = transactionSlice.actions;
 
 export default transactionSlice.reducer;

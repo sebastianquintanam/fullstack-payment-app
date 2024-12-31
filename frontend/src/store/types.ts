@@ -16,11 +16,11 @@ export interface Product {
   }
   
   export interface ProductState {
-    products: Product[];
+    items: Product[];
     selectedProduct: Product | null;
     loading: boolean;
     error: string | null;
-  }
+}
   
   export interface TransactionState {
     error: string | null;

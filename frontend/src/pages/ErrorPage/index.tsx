@@ -1,4 +1,3 @@
-// /frontend/src/pages/ErrorPage/index.tsx
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -8,7 +7,7 @@ import { Card } from '../../components/ui/card';
 import { Alert, AlertTitle, AlertDescription } from '../../components/ui/alert';
 
 export const ErrorPage: React.FC = () => {
-  const error = useSelector((state: RootState) => state.transactions.error);
+  const error = useSelector((state: RootState) => state.transactions?.error || 'Error desconocido');
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -20,7 +19,7 @@ export const ErrorPage: React.FC = () => {
 
         <Alert variant="destructive">
           <AlertTitle>Lo sentimos, ha ocurrido un error</AlertTitle>
-          <AlertDescription>{error || 'Error procesando el pago'}</AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
 
         <div className="space-y-4">
@@ -47,3 +46,5 @@ export const ErrorPage: React.FC = () => {
     </div>
   );
 };
+
+export default ErrorPage;

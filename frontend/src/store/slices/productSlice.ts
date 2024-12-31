@@ -1,27 +1,37 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { Product, ProductState } from '../../types/product.types';
 
-// Estado inicial
 const initialState: ProductState = {
-  items: [], 
+  products: [], // Cambiado de items a products
   selectedProduct: null,
   loading: false,
   error: null,
 };
 
-// Acción asincrónica para obtener los productos
 export const fetchProducts = createAsyncThunk<Product[], void>(
   'products/fetchProducts',
   async (): Promise<Product[]> => {
-    const response = await fetch('/api/products'); 
-    if (!response.ok) {
-      throw new Error('Error al cargar los productos');
+    try {
+      const response = await fetch('/api/products');
+      if (!response.ok) {
+        throw new Error('Error al cargar los productos');
+      }
+      const data = await response.json();
+      
+      // Asegurarnos de que los datos tengan el formato correcto
+      return data.map((item: { id: number; name: string; description: string; price: number; stock: number }): Product => ({
+        id: Number(item.id),
+        name: String(item.name),
+        description: String(item.description),
+        price: Number(item.price),
+        stock: Number(item.stock)
+      }));
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Error desconocido');
     }
-    return response.json();
   }
 );
 
-// Slice para los productos
 const productSlice = createSlice({
   name: 'products',
   initialState,
@@ -33,12 +43,9 @@ const productSlice = createSlice({
       state,
       action: PayloadAction<{ productId: number; newStock: number }>
     ) => {
-      // Busca el producto directamente, ambos deben ser tipo "number"
-      const product = state.items.find((p) => p.id === action.payload.productId);
+      const product = state.products.find(p => p.id === action.payload.productId);
       if (product) {
         product.stock = action.payload.newStock;
-      } else {
-        console.warn(`Producto con ID ${action.payload.productId} no encontrado.`);
       }
     },
   },
@@ -46,21 +53,20 @@ const productSlice = createSlice({
     builder
       .addCase(fetchProducts.pending, (state) => {
         state.loading = true;
-        state.error = null; // Reinicia el error al empezar a cargar
+        state.error = null;
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload; // Asigna los productos devueltos
+        state.products = action.payload;
+        state.error = null;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Error al cargar los productos'; // Muestra un error si la solicitud falla
-        console.error(action.error.message); // Log para depuración
+        state.error = action.error.message ?? 'Error al cargar los productos';
+        state.products = [];
       });
   },
 });
 
-// Exporta las acciones y el reducer
 export const { setSelectedProduct, updateStock } = productSlice.actions;
-
 export default productSlice.reducer;
