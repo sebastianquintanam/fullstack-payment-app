@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import type { Product, ProductState } from '../../types';
+import type { Product, ProductState } from '../../types/product.types';
 
 // Estado inicial
 const initialState: ProductState = {

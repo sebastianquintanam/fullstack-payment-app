@@ -1,54 +1,57 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { ProductCard } from '../../components/product/ProductCard';
 import { fetchProducts, setSelectedProduct } from '../../store/slices/productSlice';
 import type { AppDispatch, RootState } from '../../store/store';
-import type { Product } from '../../types';
+import type { Product } from '../../types/product.types';
 
 export const ProductPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  // Corregimos la referencia al estado
+  // Obtenemos los datos del estado global
   const { items: products, loading, error } = useSelector((state: RootState) => state.products);
 
+  // Disparamos la acción para obtener los productos al cargar la página
   useEffect(() => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
+  // Maneja el clic en un producto
   const handleProductClick = (id: number) => {
-    const selectedProduct = products.find((product: Product) => product.id === id);
+    const selectedProduct = products?.find((product: Product) => product.id === id);
     if (selectedProduct) {
       dispatch(setSelectedProduct(selectedProduct));
-      navigate(`/checkout/${id}`);
+      navigate(`/products/${id}`);
     }
   };
 
+  // Muestra un mensaje mientras los productos se cargan
   if (loading) {
-    return <div className="text-center p-8">Cargando productos...</div>;
+    return <div>Cargando productos...</div>;
   }
 
+  // Muestra un mensaje de error si ocurre un problema al cargar los productos
   if (error) {
-    return <div className="text-center text-red-600 p-8">Error: {error}</div>;
+    return <div>Error: {error}</div>;
   }
 
+  // Renderiza la lista de productos
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-8">Productos Disponibles</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products.map((product: Product) => (
-          <ProductCard
-            key={product.id.toString()}
-            id={product.id} // Confirmamos que id es un número
-            name={product.name}
-            price={product.price}
-            stock={product.stock}
-            description={product.description}
-            onClick={() => handleProductClick(product.id)} // Manejamos id como número
-          />
-        ))}
-      </div>
+    <div>
+      <h1>Productos</h1>
+      {products && products.length > 0 ? (
+        <ul>
+          {products.map((product: Product) => (
+            <li key={product.id}>
+              {product.name} - ${product.price.toFixed(2)}
+              <button onClick={() => handleProductClick(product.id)}>Ver detalles</button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div>No hay productos disponibles</div>
+      )}
     </div>
   );
 };

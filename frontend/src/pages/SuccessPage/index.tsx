@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { RootState } from '../../store/store';
 import { CheckCircle } from 'lucide-react';
-import { Card } from '../../components/Card';
+import { Card } from "../../components/ui/card";
 
 export const SuccessPage: React.FC = () => {
   const transaction = useSelector((state: RootState) => state.transactions.currentTransaction);

@@ -50,7 +50,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onPaymentComplete }) =
     // Limpiar error si existe
     if (errors.cardNumber) {
       setErrors(prev => {
-        const { cardNumber, ...rest } = prev;
+        const { ...rest } = prev;
         return rest;
       });
     }
