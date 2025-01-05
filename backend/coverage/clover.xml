@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1735958987865" clover="3.2.0">
-  <project timestamp="1735958987865" name="All files">
-    <metrics statements="116" coveredstatements="69" conditionals="15" coveredconditionals="3" methods="27" coveredmethods="5" elements="158" coveredelements="77" complexity="0" loc="116" ncloc="116" packages="7" files="7" classes="7"/>
+<coverage generated="1736042717707" clover="3.2.0">
+  <project timestamp="1736042717707" name="All files">
+    <metrics statements="116" coveredstatements="58" conditionals="15" coveredconditionals="2" methods="27" coveredmethods="3" elements="158" coveredelements="63" complexity="0" loc="116" ncloc="116" packages="7" files="7" classes="7"/>
     <package name="config.seeds">
       <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
       <file name="initial-products.seed.ts" path="/Users/sebastianquintanam/fullstack-payment-app/backend/src/config/seeds/initial-products.seed.ts">
@@ -76,9 +76,9 @@
       </file>
     </package>
     <package name="modules.transactions.application.services">
-      <metrics statements="40" coveredstatements="33" conditionals="6" coveredconditionals="3" methods="7" coveredmethods="5"/>
+      <metrics statements="40" coveredstatements="22" conditionals="6" coveredconditionals="2" methods="7" coveredmethods="3"/>
       <file name="transactions.service.ts" path="/Users/sebastianquintanam/fullstack-payment-app/backend/src/modules/transactions/application/services/transactions.service.ts">
-        <metrics statements="40" coveredstatements="33" conditionals="6" coveredconditionals="3" methods="7" coveredmethods="5"/>
+        <metrics statements="40" coveredstatements="22" conditionals="6" coveredconditionals="2" methods="7" coveredmethods="3"/>
         <line num="3" count="1" type="stmt"/>
         <line num="4" count="1" type="stmt"/>
         <line num="6" count="1" type="stmt"/>
@@ -87,26 +87,26 @@
         <line num="13" count="1" type="stmt"/>
         <line num="14" count="1" type="stmt"/>
         <line num="18" count="1" type="stmt"/>
-        <line num="20" count="3" type="stmt"/>
-        <line num="21" count="3" type="stmt"/>
-        <line num="26" count="1" type="stmt"/>
-        <line num="29" count="1" type="stmt"/>
-        <line num="30" count="1" type="cond" truecount="0" falsecount="1"/>
+        <line num="20" count="1" type="stmt"/>
+        <line num="21" count="1" type="stmt"/>
+        <line num="26" count="0" type="stmt"/>
+        <line num="29" count="0" type="stmt"/>
+        <line num="30" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="31" count="0" type="stmt"/>
-        <line num="35" count="1" type="cond" truecount="0" falsecount="1"/>
+        <line num="35" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="36" count="0" type="stmt"/>
-        <line num="40" count="1" type="stmt"/>
-        <line num="43" count="1" type="stmt"/>
-        <line num="52" count="1" type="stmt"/>
-        <line num="53" count="1" type="stmt"/>
-        <line num="59" count="2" type="stmt"/>
-        <line num="61" count="2" type="stmt"/>
-        <line num="62" count="2" type="stmt"/>
-        <line num="65" count="2" type="stmt"/>
-        <line num="66" count="2" type="stmt"/>
-        <line num="68" count="2" type="cond" truecount="1" falsecount="0"/>
-        <line num="69" count="1" type="stmt"/>
-        <line num="70" count="1" type="stmt"/>
+        <line num="40" count="0" type="stmt"/>
+        <line num="43" count="0" type="stmt"/>
+        <line num="52" count="0" type="stmt"/>
+        <line num="53" count="0" type="stmt"/>
+        <line num="59" count="1" type="stmt"/>
+        <line num="61" count="1" type="stmt"/>
+        <line num="62" count="1" type="stmt"/>
+        <line num="65" count="1" type="stmt"/>
+        <line num="66" count="1" type="stmt"/>
+        <line num="68" count="1" type="cond" truecount="0" falsecount="1"/>
+        <line num="69" count="0" type="stmt"/>
+        <line num="70" count="0" type="stmt"/>
         <line num="73" count="1" type="stmt"/>
         <line num="76" count="1" type="stmt"/>
         <line num="77" count="1" type="stmt"/>
@@ -118,7 +118,7 @@
         <line num="93" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="94" count="0" type="stmt"/>
         <line num="96" count="0" type="stmt"/>
-        <line num="101" count="1" type="stmt"/>
+        <line num="101" count="0" type="stmt"/>
       </file>
     </package>
     <package name="modules.transactions.domain.entities">

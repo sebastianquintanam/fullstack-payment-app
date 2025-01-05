@@ -126,4 +126,6 @@ describe('ProductsService', () => {
     // Verificamos que el método arroje un error con el mensaje esperado
     await expect(service.updateProductStock(1, 5)).rejects.toThrowError('No hay suficiente stock');
   });
+
+
 });
