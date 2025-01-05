@@ -34,24 +34,4 @@ export class ProductsService {
     return this.productRepository.updateStock(id, product.stock - quantity);
   }
 
-  // Crear productos iniciales
-  async seedProducts() {
-    try {
-      console.log('Iniciando seed de productos...');
-      const existingProducts = await this.getAllProducts();
-
-      if (existingProducts.length === 0) {
-        console.log('No hay productos, creando iniciales...');
-        for (const product of initialProducts) {
-          await this.productRepository.save(product);
-          console.log(`Producto creado: ${product.name}`);
-        }
-        return 'Productos iniciales creados exitosamente';
-      }
-      return 'Ya existen productos en la base de datos';
-    } catch (error) {
-      console.error('Error al crear productos:', error);
-      throw new Error('Error al crear productos iniciales');
-    }
-  }
 }

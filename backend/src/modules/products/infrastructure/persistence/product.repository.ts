@@ -32,6 +32,10 @@ export class ProductRepository {
 
   // Función para actualizar el stock cuando alguien compra
   async updateStock(id: number, newStock: number): Promise<Product> {
+    const product = await this.findById(id);
+    if (!product) {
+      throw new Error('Product not found');
+    }
     await this.repository.update(id, { stock: newStock });
     return this.findById(id);
   }

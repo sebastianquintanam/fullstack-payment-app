@@ -31,11 +31,6 @@ export class TransactionsService {
       throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
     }
 
-    // Verificar si hay stock suficiente
-    if (quantity > product.stock) {
-      throw new HttpException('Insufficient stock for the requested quantity', HttpStatus.BAD_REQUEST);
-    }
-
     // Actualizar el stock del producto
     await this.productsService.updateProductStock(productId, -quantity);
 
@@ -87,14 +82,6 @@ export class TransactionsService {
     return this.transactionRepository.findAll({ relations: ['product'] });
   }
 
-  // Obtener una transacción por su ID
-  async getTransactionById(id: number): Promise<Transaction> {
-    const transaction = await this.transactionRepository.findById(id, { relations: ['product'] });
-    if (!transaction) {
-      throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
-    }
-    return transaction;
-  }
 
   // Generar un número único para la transacción
   private generateTransactionNumber(): string {
