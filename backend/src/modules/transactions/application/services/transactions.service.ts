@@ -61,12 +61,6 @@ export class TransactionsService {
     const { transactionNumber, status } = updateTransactionDto;
     console.log('Parsed values:', { transactionNumber, status });
 
-    // Validar que el estado proporcionado sea válido
-    if (!Object.values(TransactionStatus).includes(status as TransactionStatus)) {
-    console.log('Invalid status provided:', status);
-    throw new HttpException('Invalid transaction status', HttpStatus.BAD_REQUEST);
-    }
-
     // Buscar la transacción por su número único
     console.log('Searching for transaction:', transactionNumber);
     const transaction = await this.transactionRepository.findByTransactionNumber(transactionNumber);

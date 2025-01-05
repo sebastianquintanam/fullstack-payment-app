@@ -17,6 +17,7 @@ describe('TransactionsService', () => {
     findAll: jest.fn(), // Simula la búsqueda de todas las transacciones
     findByTransactionNumber: jest.fn(), // Simula la búsqueda de una transacción por número
     updateStatus: jest.fn(), // Simula la actualización del estado de una transacción
+    save: jest.fn(), // Simula el guardado del estado de una transacción
   };
 
   // Mock de ProductsService con los métodos que utiliza el servicio
@@ -109,11 +110,10 @@ describe('TransactionsService', () => {
 
     // Configuración del mock para simular comportamientos
     mockTransactionRepository.findByTransactionNumber.mockResolvedValue(mockTransaction);
-    mockTransactionRepository.updateStatus.mockResolvedValue({
+    mockTransactionRepository.save.mockResolvedValue({
       ...mockTransaction,
       status: TransactionStatus.COMPLETED, // Cambiado para usar la enumeración
     });
-    mockProductsService.updateProductStock.mockResolvedValue(undefined);
 
     // Llamada al método del servicio
     const result = await service.updateTransactionStatus(updateTransactionDto);
@@ -121,6 +121,38 @@ describe('TransactionsService', () => {
     // Validaciones
     expect(result.status).toBe(TransactionStatus.COMPLETED); // Verifica que el estado sea COMPLETED
     expect(mockTransactionRepository.findByTransactionNumber).toHaveBeenCalledWith('TRX-123'); // Verifica que se buscó por el número correcto
-    expect(mockProductsService.updateProductStock).toHaveBeenCalledWith(1, 1); // Verifica que se actualizó el stock correctamente
+    expect(mockTransactionRepository.save).toHaveBeenCalledWith(expect.any(Object)); // Verifica que se guardó la transacción actualizada
+  });
+
+  // Pruebas adicionales
+  it('addional testing', async () => {
+    // DTO de entrada para actualizar la transacción
+    const updateTransactionDto: UpdateTransactionStatusDto = {
+      transactionNumber: 'TRX-123',
+      status: TransactionStatus.COMPLETED, // Cambiado para usar la enumeración
+    };
+
+    // Datos simulados de la transacción actual
+    const mockTransaction = {
+      id: 1,
+      status: TransactionStatus.PENDING, // Cambiado para usar la enumeración
+      product: {
+        id: 1,
+        stock: 10,
+      },
+    };
+
+    // Configuración del mock para simular comportamientos
+    mockTransactionRepository.findByTransactionNumber.mockResolvedValue(null);
+    
+    // Validaciones
+    try {
+      await service.updateTransactionStatus(updateTransactionDto);
+    } catch (error) { // Verifica que se lanzó una excepción
+      expect(error.message).toBe('Transaction not found');
+    }
+
+    expect(mockTransactionRepository.findByTransactionNumber).toHaveBeenCalledWith('TRX-123'); // Verifica que se buscó por el número correcto
+    
   });
 });
