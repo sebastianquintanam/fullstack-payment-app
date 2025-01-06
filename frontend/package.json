@@ -11,6 +11,7 @@
     "shadcn:init": "shadcn-ui init",
     "shadcn:add-card": "shadcn-ui add card",
     "test": "jest",
+    "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
@@ -37,6 +38,7 @@
     "@eslint/js": "^9.17.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
     "@types/jest": "^29.5.14",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.10.2",
@@ -49,7 +51,9 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
+    "identity-obj-proxy": "^3.0.0",
     "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "ts-jest": "^29.2.5",

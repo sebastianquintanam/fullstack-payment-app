@@ -3,6 +3,7 @@
     "types": ["jest", "node"], // Asegúrate de que "jest" esté incluido
     "target": "ES2020",
     "useDefineForClassFields": true,
+    "esModuleInterop": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
@@ -18,6 +19,6 @@
     },
     "strict": true
   },
-  "include": ["src", "jest.config.js"], // Asegúrate de incluir `jest.config.js`
+  "include": ["src", "jest.config.js", "jest.coverage.config.js"], // Asegúrate de incluir `jest.config.js`
   "references": [{ "path": "./tsconfig.node.json" }]
 }
