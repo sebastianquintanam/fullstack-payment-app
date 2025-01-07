@@ -1,6 +1,6 @@
 // /frontend/src/components/payment/PaymentSummary.tsx
 import React from 'react';
-import { Alert } from '../ui/alert';
+import { Alert } from '../../components/ui/alert/alert';
 
 interface PaymentSummaryProps {
   amount: number;

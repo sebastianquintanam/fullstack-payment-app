@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import wompiService from '../../services/wompiService';
 import { PaymentSummary } from './PaymentSummary';
-import { Alert } from '../../components/ui/alert';
+import { Alert } from '../../components/ui/alert/alert';
 import { cardValidations } from '../../utils/cardValidations';
 import { updateStock } from '../../store/slices/productSlice';
 import { setTransactionComplete, setTransactionFailed } from '../../store/slices/transactionSlice';

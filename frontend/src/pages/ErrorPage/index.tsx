@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { RootState } from '../../store/store';
 import { XCircle } from 'lucide-react';
 import { Card } from '../../components/ui/card';
-import { Alert, AlertTitle, AlertDescription } from '../../components/ui/alert';
+import { Alert, AlertTitle, AlertDescription } from '../../components/ui/alert/alert';
 
 export const ErrorPage: React.FC = () => {
   const error = useSelector((state: RootState) => state.transactions?.error || 'Error desconocido');
