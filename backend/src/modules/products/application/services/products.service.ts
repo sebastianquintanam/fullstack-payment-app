@@ -34,4 +34,24 @@ export class ProductsService {
     return this.productRepository.updateStock(id, product.stock - quantity);
   }
 
+  // Agregar el método para sembrar productos
+  async seedProducts(): Promise<void> {
+    try {
+      // Verificar si ya existen productos
+      const existingProducts = await this.getAllProducts();
+      
+      if (existingProducts.length === 0) {
+        // Si no hay productos, creamos los iniciales
+        for (const productData of initialProducts) {
+          await this.productRepository.create(productData);
+        }
+        console.log('Productos iniciales creados exitosamente');
+      } else {
+        console.log('Ya existen productos en la base de datos');
+      }
+    } catch (error) {
+      console.error('Error al sembrar productos:', error);
+      throw new Error(`Error al sembrar productos: ${error.message}`);
+    }
+  }
 }

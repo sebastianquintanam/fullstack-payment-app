@@ -5,11 +5,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 import { Product } from '../../domain/entities/products.entity';
 
-// Aquí usamos @Injectable() para que NestJS pueda usar este repositorio
 @Injectable()
 export class ProductRepository {
   constructor(
-    // Esto es como conectar nuestro repositorio con la base de datos
     @InjectRepository(Product)
     private readonly repository: Repository<Product>
   ) {}
@@ -24,8 +22,14 @@ export class ProductRepository {
     return this.repository.findOne({ where: { id } });
   }
 
-   // Guardar un nuevo producto
-   async save(product: Partial<Product>): Promise<Product> {
+  // Método create para crear un nuevo producto
+  async create(product: Partial<Product>): Promise<Product> {
+    const newProduct = this.repository.create(product);
+    return this.repository.save(newProduct);
+  }
+
+  // Guardar un nuevo producto
+  async save(product: Partial<Product>): Promise<Product> {
     const newProduct = this.repository.create(product);
     return this.repository.save(newProduct);
   }
