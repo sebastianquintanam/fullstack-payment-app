@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { Transaction, TransactionState } from '../types';
+import type { Transaction, TransactionState, TransactionStatus } from '../types';
 
 // Estado inicial
 const initialState: TransactionState = {
@@ -45,7 +45,7 @@ const transactionSlice = createSlice({
       state,
       action: PayloadAction<{
         id: string;
-        status: 'COMPLETED';
+        status: TransactionStatus; 
         reference: string;
         amount: number;
         productId: number;
@@ -75,10 +75,10 @@ const transactionSlice = createSlice({
      */
     setTransactionFailed: (
       state,
-      action: PayloadAction<{ id: string; status: 'FAILED'; error: string }>
+      action: PayloadAction<{ id: string; status: TransactionStatus; error: string }>
     ) => {
       const { id, status, error } = action.payload;
-
+    
       if (state.currentTransaction && state.currentTransaction.id === id) {
         state.currentTransaction = {
           ...state.currentTransaction,

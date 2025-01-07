@@ -5,10 +5,16 @@ export interface Product {
     stock: number;
     description: string;
   }
+
+  export enum TransactionStatus {
+    PENDING = 'PENDING',
+    COMPLETED = 'COMPLETED',
+    FAILED = 'FAILED'
+}
   
   export interface Transaction {
     id: string;
-    status: 'PENDING' | 'COMPLETED' | 'FAILED';
+    status: TransactionStatus;
     amount: number;
     productId: number;
     reference: string;
